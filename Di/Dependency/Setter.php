@@ -54,7 +54,7 @@ class Setter
     public function setValue(Dependency $value)
     {
 
-        if ($value !== null && !is_a($value->getClassName(), $this->_className, true))
+        if (!is_a($value->getClassName(), $this->_className, true))
             throw new \RuntimeException(
                 "Failed to set `{$this->_name}`-value: ".
                 "Passed value `".$value->getClassName()."` ".

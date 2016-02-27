@@ -199,7 +199,10 @@ class Dependency
         foreach ($args as $arg) {
 
             $className = $arg->getClassName();
-            $arg->setValue($container->findDependency($className));
+
+            $dep = $container->findDependency($className);
+            if ($dep)
+                $arg->setValue($dep);
         }
 
         return $this;
