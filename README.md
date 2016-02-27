@@ -1,18 +1,20 @@
 
-# Tale Http Runtime
+# Tale Di
 **A Tale Framework Component**
 
-# What is Tale Http Runtime?
+# What is Tale Di?
 
+Dependency Injection.
 
-It is PSR-7 compliant
+Tale DI can automatically inject constructor arguments and `setXxx`-style setter values to instances.
+The DI container will manage these dependencies and lazily wire them together.
 
 # Installation
 
 Install via Composer
 
 ```bash
-composer require "talesoft/tale-http-runtime:*"
+composer require "talesoft/tale-di:*"
 composer install
 ```
 
@@ -20,56 +22,68 @@ composer install
 
 ```php
 
-class HelloMiddleware implements MiddlewareInterface
+use Tale\Di\ContainerInterface;
+use Tale\Di\ContainerTrait;
+
+
+class App implements ContainerInterface
+{
+    use ContainerTrait;
+}
+
+class Config {}
+
+class Service
 {
 
-    public function __invoke(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        callable $next
-    )
-    {
-        $response->getBody()->write('Hello ');
+    private $_config;
 
-        return $next($request, $response);
+    public function __construct(Config $config)
+    {
+
+        $this->_config = $config;
+    }
+
+    public function getConfig()
+    {
+        return $this->_config;
     }
 }
 
-class WorldMiddleware implements MiddlewareInterface
+class Cache extends Service
+{
+}
+
+class Renderer extends Service
 {
 
-    public function __invoke(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        callable $next
-    )
+    private $_cache;
+
+    public function setCache(Cache $cache)
     {
-        $response = $next($request, $response);
-        $response->getBody()->write('World!');
-        return $response;
+
+        $this->_cache = $cache;
+        return $this;
+    }
+
+    public function getCache()
+    {
+        return $this->_cache;
+    }
+
+    public function render()
+    {
+
+        return get_class($this);
     }
 }
 
-class FuckingMiddleware implements MiddlewareInterface
-{
 
-    public function __invoke(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        callable $next
-    )
-    {
-        $response->getBody()->write('fucking ');
-        return $next($request, $response);
-    }
-}
+$app = new App();
+$app->register(Config::class);
+$app->register(Cache::class);
+$app->register(AwesomeRenderer::class);
 
-
-$queue = new Queue();
-$queue->enqueue(new HelloMiddleware());
-$queue->enqueue(new WorldMiddleware());
-$queue->enqueue(new FuckingMiddleware());
-
-Runtime::emit($queue); //(Output) "Hello fucking World!"
+var_dump($app->get(Renderer::class)->render()); //"AwesomeRenderer", Cache and Config are auto-wired and available
     
 ```
