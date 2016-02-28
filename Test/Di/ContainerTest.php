@@ -1,10 +1,9 @@
 <?php
 
-namespace Tale\Test\Http;
+namespace Tale\Test\Di;
 
 use Tale\Di\ContainerInterface;
 use Tale\Di\ContainerTrait;
-
 
 class App implements ContainerInterface
 {
@@ -93,18 +92,18 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     {
 
         $app = new App();
-        $app->registerContainer();
-        $app->register(Config::class);
-        $app->register(Cache::class);
-        $app->register(AwesomeRenderer::class);
+        $app->registerDependencyInstance($app);
+        $app->registerDependency(Config::class);
+        $app->registerDependency(Cache::class);
+        $app->registerDependency(AwesomeRenderer::class);
 
-        $renderer = $app->get(Renderer::class);
+        $renderer = $app->getDependency(Renderer::class);
         $this->assertInstanceOf(AwesomeRenderer::class, $renderer);
         $this->assertEquals(AwesomeRenderer::class, $renderer->render());
         $this->assertInstanceOf(Config::class, $renderer->getConfig());
         $this->assertInstanceOf(App::class, $renderer->getApp());
 
-        $cache = $app->get(Cache::class);
+        $cache = $app->getDependency(Cache::class);
         $this->assertInstanceOf(Cache::class, $cache);
         $this->assertInstanceOf(Config::class, $cache->getConfig());
     }

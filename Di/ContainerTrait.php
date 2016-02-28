@@ -68,7 +68,7 @@ trait ContainerTrait
      *
      * @return bool
      */
-    public function has($className)
+    public function hasDependency($className)
     {
 
         return $this->findDependency($className) !== null;
@@ -80,7 +80,7 @@ trait ContainerTrait
      * @return null|object
      * @throws \Exception
      */
-    public function get($className)
+    public function getDependency($className)
     {
 
         $dep = $this->findDependency($className);
@@ -100,7 +100,7 @@ trait ContainerTrait
      *
      * @return $this
      */
-    public function register($className, $persistent = true)
+    public function registerDependency($className, $persistent = true)
     {
 
         if (!($this instanceof ContainerInterface))
@@ -109,7 +109,7 @@ trait ContainerTrait
                 ContainerTrait::class.", but doesnt implement ".ContainerInterface::class
             );
 
-        if ($this->has($className))
+        if ($this->hasDependency($className))
             throw new \RuntimeException(
                 "Failed to register dependency $className: This dependency ".
                 "is already registered. Use a sub-class to avoid ambiguity"
@@ -129,17 +129,10 @@ trait ContainerTrait
     /**
      * @return $this
      */
-    public function registerContainer()
+    public function registerDependencyInstance($instance)
     {
 
-        if (!($this instanceof ContainerInterface))
-            throw new \RuntimeException(
-                "Failed to register container: ".get_class($this)." uses ".
-                ContainerTrait::class.", but doesnt implement ".ContainerInterface::class
-            );
-
-        $this->_dependencies[] = new Dependency(get_class($this), true, null, null, $this);
-
+        $this->_dependencies[] = new Dependency(get_class($instance), true, null, null, $instance);
         return $this;
     }
 }
