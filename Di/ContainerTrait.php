@@ -2,8 +2,6 @@
 
 namespace Tale\Di;
 
-use Tale\Di\Dependency\Arg;
-
 trait ContainerTrait
 {
 
@@ -66,14 +64,26 @@ trait ContainerTrait
             );
 
         /** @var ContainerInterface|ContainerTrait $this */
-
         $dep = new Dependency($className, $persistent);
         $this->_dependencies[] = $dep;
-
 
         //TODO: ->analyze is the workhorse, this should be cached somehow
         $dep->analyze()
             ->wire($this);
+
+        return $this;
+    }
+
+    public function registerContainer()
+    {
+
+        if (!($this instanceof ContainerInterface))
+            throw new \RuntimeException(
+                "Failed to register container: ".get_class($this)." uses ".
+                ContainerTrait::class.", but doesnt implement ".ContainerInterface::class
+            );
+
+        $this->_dependencies[] = new Dependency(get_class($this), true, null, null, $this);
 
         return $this;
     }

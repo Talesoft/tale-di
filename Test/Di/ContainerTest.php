@@ -65,7 +65,22 @@ class Renderer extends Service
 }
 
 class AwesomeRenderer extends Renderer
-{}
+{
+
+    private $_app;
+
+    public function setApp(App $app)
+    {
+
+        $this->_app = $app;
+    }
+
+    public function getApp()
+    {
+
+        return $this->_app;
+    }
+}
 
 
 
@@ -78,6 +93,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     {
 
         $app = new App();
+        $app->registerContainer();
         $app->register(Config::class);
         $app->register(Cache::class);
         $app->register(AwesomeRenderer::class);
@@ -86,6 +102,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(AwesomeRenderer::class, $renderer);
         $this->assertEquals(AwesomeRenderer::class, $renderer->render());
         $this->assertInstanceOf(Config::class, $renderer->getConfig());
+        $this->assertInstanceOf(App::class, $renderer->getApp());
 
         $cache = $app->get(Cache::class);
         $this->assertInstanceOf(Cache::class, $cache);

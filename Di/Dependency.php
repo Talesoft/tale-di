@@ -23,7 +23,7 @@ class Dependency
 
     private $_instance;
 
-    public function __construct($className, $persistent = true, array $args = null, array $setters = null)
+    public function __construct($className, $persistent = true, array $args = null, array $setters = null, $instance = null)
     {
 
         if (!class_exists($className))
@@ -31,11 +31,17 @@ class Dependency
                 "Failed to create dependency: $className doesnt exist"
             );
 
+        if (!$persistent && $instance)
+            throw new \InvalidArgumentException(
+                "Failed to set pre-defined instance: Dependencies with a ".
+                "pre-defined instance need to be persistent"
+            );
+
         $this->_className = $className;
         $this->_args = $args ?: [];
         $this->_setters = $setters ?: [];
         $this->_persistent = $persistent;
-        $this->_instance = null;
+        $this->_instance = $instance;
     }
 
     public function analyze()

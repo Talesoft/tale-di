@@ -6,6 +6,8 @@ interface ContainerInterface
 {
 
     public function findDependency($className);
+    public function has($className);
     public function get($className);
     public function register($className, $persistent = true);
+    public function registerContainer();
 }
