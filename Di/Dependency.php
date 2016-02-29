@@ -62,7 +62,12 @@ class Dependency
             foreach ($ctor->getParameters() as $param) {
 
                 $name = $param->getName();
-                $className = $param->getClass()->getName();
+                $className = $param->getClass();
+
+                if (!$className)
+                    continue;
+
+                $className = $className->getName();
 
                 if (!$className)
                     throw new \RuntimeException(
@@ -87,7 +92,12 @@ class Dependency
                 continue;
 
             $params = $method->getParameters();
-            $className = $params[0]->getClass()->getName();
+            $className = $params[0]->getClass();
+
+            if (!$className)
+                continue;
+
+            $className = $className->getName();
 
             if (count($params) !== 1 || !$className || $params[0]->isOptional())
                 continue;
@@ -205,8 +215,8 @@ class Dependency
         foreach ($args as $arg) {
 
             $className = $arg->getClassName();
-
             $dep = $container->findDependency($className);
+
             if ($dep)
                 $arg->setValue($dep);
         }

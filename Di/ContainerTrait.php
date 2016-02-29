@@ -111,8 +111,9 @@ trait ContainerTrait
 
         if ($this->hasDependency($className))
             throw new \RuntimeException(
-                "Failed to register dependency $className: This dependency ".
-                "is already registered. Use a sub-class to avoid ambiguity"
+                "Failed to register dependency $className: A dependency ".
+                "of this type is already registered. Use a sub-class to ".
+                "avoid ambiguity"
             );
 
         /** @var ContainerInterface|ContainerTrait $this */
