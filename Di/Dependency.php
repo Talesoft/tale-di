@@ -4,6 +4,7 @@ namespace Tale\Di;
 
 use Tale\Di\Dependency\Arg;
 use Tale\Di\Dependency\Setter;
+use Tale\DiException;
 use Tale\Factory;
 
 /**
@@ -217,7 +218,7 @@ class Dependency implements \Serializable
             $value = $arg->getValue();
 
             if ($value === null && !$arg->isOptional())
-                throw new \Exception(
+                throw new DiException(
                     "Failed to create instance of {$this->_className}: ".
                     "Constructor argument $name is not specified. ".
                     "Register a ".$arg->getClassName()." dependency ".
@@ -247,21 +248,31 @@ class Dependency implements \Serializable
     }
 
     /**
-     * @param Arg[] $args
+     * @param Arg[]              $setters
      * @param ContainerInterface $container
      *
      * @return $this
+     * @throws DiException
      */
-    private function _wireArgs(array $args, ContainerInterface $container)
+    private function _wireSetters(array $setters, ContainerInterface $container)
     {
 
-        foreach ($args as $arg) {
+        foreach ($setters as $name => $arg) {
 
             $className = $arg->getClassName();
-            $dep = $container->findDependency($className);
 
-            if ($dep)
-                $arg->setValue($dep);
+            if (!$container->hasDependency($className)) {
+
+                if ($arg instanceof Arg && !$arg->isOptional())
+                    throw new DiException(
+                        "Failed to wire {$this->_className}'s $name-argument :".
+                        "The DI-container does not contain a $className dependency"
+                    );
+
+                continue;
+            }
+
+            $arg->setValue($container->getDependency($className));
         }
 
         return $this;
@@ -273,8 +284,8 @@ class Dependency implements \Serializable
     public function wire(ContainerInterface $container)
     {
 
-        $this->_wireArgs($this->_args, $container);
-        $this->_wireArgs($this->_setters, $container);
+        $this->_wireSetters($this->_args, $container);
+        $this->_wireSetters($this->_setters, $container);
     }
 
     public function serialize()

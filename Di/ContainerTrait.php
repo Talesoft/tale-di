@@ -2,8 +2,11 @@
 
 namespace Tale\Di;
 
+use Tale\DiException;
+
 /**
  * Class ContainerTrait
+ *
  * @package Tale\Di
  */
 trait ContainerTrait
@@ -33,7 +36,7 @@ trait ContainerTrait
      *
      * @return Dependency|null
      */
-    public function findDependency($className)
+    public function getDependency($className)
     {
 
         //Exact matches are found directly
@@ -41,12 +44,11 @@ trait ContainerTrait
             return $this->_dependencies[$className];
 
         //After that we search for a sub-class
-        $keys = array_reverse(array_keys($this->_dependencies));
-        foreach ($keys as $key) {
+        $depClassNames = array_reverse(array_keys($this->_dependencies));
+        foreach ($depClassNames as $depClassName) {
 
-            $dep = $this->_dependencies[$key];
-            if (is_a($dep->getClassName(), $className, true))
-                return $dep;
+            if (is_a($depClassName, $className, true))
+                return $this->_dependencies[$depClassName];
         }
 
         return null;
@@ -60,7 +62,7 @@ trait ContainerTrait
     public function hasDependency($className)
     {
 
-        return $this->findDependency($className) !== null;
+        return $this->getDependency($className) !== null;
     }
 
     /**
@@ -69,15 +71,15 @@ trait ContainerTrait
      * @return null|object
      * @throws \Exception
      */
-    public function getDependency($className)
+    public function getDependencyInstance($className)
     {
 
-        $dep = $this->findDependency($className);
+        $dep = $this->getDependency($className);
 
         if (!$dep)
-            throw new \RuntimeException(
+            throw new DiException(
                 "Failed to locate dependency $className. Register it ".
-                "with Container->register"
+                "with \$container->registerDependency($className::class)"
             );
 
         return $dep->getInstance();
@@ -89,18 +91,19 @@ trait ContainerTrait
      * @param object $instance
      *
      * @return $this
+     * @throws DiException
      */
     public function registerDependency($className, $persistent = true, $instance = null)
     {
 
         if (!($this instanceof ContainerInterface))
-            throw new \RuntimeException(
+            throw new DiException(
                 "Failed to register dependency: ".get_class($this)." uses ".
                 ContainerTrait::class.", but doesnt implement ".ContainerInterface::class
             );
 
         if (isset($this->_dependencies[$className]))
-            throw new \RuntimeException(
+            throw new DiException(
                 "Failed to register dependency $className: A dependency ".
                 "of this type is already registered. Use a sub-class to ".
                 "avoid ambiguity"

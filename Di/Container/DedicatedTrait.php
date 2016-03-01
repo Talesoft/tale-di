@@ -17,7 +17,7 @@ trait DedicatedTrait
     public function get($className)
     {
 
-        return $this->getDependency($className);
+        return $this->getDependencyInstance($className);
     }
 
     public function register($className, $persistent = false)
