@@ -6,10 +6,28 @@ use Tale\Di\Dependency\Arg;
 use Tale\Di\Dependency\Setter;
 use Tale\Factory;
 
-class Dependency
+/**
+ * Class Dependency
+ *
+ * @package Tale\Di
+ */
+class Dependency implements \Serializable
 {
 
+    /**
+     * @var string
+     */
     private $_className;
+
+    /**
+     * @var bool
+     */
+    private $_persistent;
+
+    /**
+     * @var object
+     */
+    private $_instance;
 
     /**
      * @var Arg[]
@@ -21,9 +39,14 @@ class Dependency
      */
     private $_setters;
 
-    private $_instance;
-
-    public function __construct($className, $persistent = true, array $args = null, array $setters = null, $instance = null)
+    /**
+     * Dependency constructor.
+     *
+     * @param string $className
+     * @param bool   $persistent
+     * @param object $instance
+     */
+    public function __construct($className, $persistent = true, $instance = null)
     {
 
         if (!class_exists($className))
@@ -31,19 +54,23 @@ class Dependency
                 "Failed to create dependency: $className doesnt exist"
             );
 
-        if (!$persistent && $instance)
+        if ($instance && !$persistent)
             throw new \InvalidArgumentException(
                 "Failed to set pre-defined instance: Dependencies with a ".
-                "pre-defined instance need to be persistent"
+                "pre-defined instance need to be persistent and can't have ".
+                "any args or setters."
             );
 
         $this->_className = $className;
-        $this->_args = $args ?: [];
-        $this->_setters = $setters ?: [];
         $this->_persistent = $persistent;
         $this->_instance = $instance;
+        $this->_args = [];
+        $this->_setters = [];
     }
 
+    /**
+     * @return $this
+     */
     public function analyze()
     {
 
@@ -135,6 +162,12 @@ class Dependency
         return $this->_setters;
     }
 
+    /**
+     * @param                     $name
+     * @param \Tale\Di\Dependency $value
+     *
+     * @return $this
+     */
     public function set($name, Dependency $value)
     {
 
@@ -148,6 +181,12 @@ class Dependency
         return $this;
     }
 
+    /**
+     * @param                     $name
+     * @param \Tale\Di\Dependency $value
+     *
+     * @return $this
+     */
     public function call($name, Dependency $value)
     {
 
@@ -161,6 +200,11 @@ class Dependency
         return $this;
     }
 
+    /**
+     * @return null|object
+     * @throws \Exception
+     * @throws \Tale\FactoryException
+     */
     public function getInstance()
     {
 
@@ -176,9 +220,8 @@ class Dependency
                 throw new \Exception(
                     "Failed to create instance of {$this->_className}: ".
                     "Constructor argument $name is not specified. ".
-                    "Register a ".$arg->getClassName()." instance with ".
-                    "Dependency->set('$name', \$instance) or make the argument ".
-                    "optional."
+                    "Register a ".$arg->getClassName()." dependency ".
+                    " or make the argument optional."
                 );
 
             $args[] = $value !== null ? $value->getInstance() : null;
@@ -224,10 +267,34 @@ class Dependency
         return $this;
     }
 
+    /**
+     * @param \Tale\Di\ContainerInterface $container
+     */
     public function wire(ContainerInterface $container)
     {
 
         $this->_wireArgs($this->_args, $container);
         $this->_wireArgs($this->_setters, $container);
+    }
+
+    public function serialize()
+    {
+        return serialize([
+            $this->_className,
+            $this->_persistent,
+            $this->_args,
+            $this->_setters
+        ]);
+    }
+
+    public function unserialize($serialized)
+    {
+
+        list(
+            $this->_className,
+            $this->_persistent,
+            $this->_args,
+            $this->_setters
+        ) = unserialize($serialized);
     }
 }

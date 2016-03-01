@@ -17,13 +17,6 @@ trait ContainerTrait
     private $_dependencies = [];
 
     /**
-     * A cache for faster resolving of dependencies.
-     *
-     * @var Dependency[]
-     */
-    private $_dependencyFindCache = [];
-
-    /**
      * Returns all dependencies registered on this container.
      *
      * @return Dependency[]
@@ -43,24 +36,20 @@ trait ContainerTrait
     public function findDependency($className)
     {
 
-        if (isset($this->_dependencyFindCache[$className]))
-            return $this->_dependencyFindCache[$className];
+        //Exact matches are found directly
+        if (isset($this->_dependencies[$className]))
+            return $this->_dependencies[$className];
 
-        $result = null;
-        $i = count($this->_dependencies);
-        while ($i--) {
+        //After that we search for a sub-class
+        $keys = array_reverse(array_keys($this->_dependencies));
+        foreach ($keys as $key) {
 
-            $dep = $this->_dependencies[$i];
-            if (is_a($dep->getClassName(), $className, true)) {
-
-                $result = $dep;
-                break;
-            }
+            $dep = $this->_dependencies[$key];
+            if (is_a($dep->getClassName(), $className, true))
+                return $dep;
         }
 
-        $this->_dependencyFindCache[$className] = $result;
-
-        return $result;
+        return null;
     }
 
     /**
@@ -95,12 +84,13 @@ trait ContainerTrait
     }
 
     /**
-     * @param      $className
-     * @param bool $persistent
+     * @param        $className
+     * @param bool   $persistent
+     * @param object $instance
      *
      * @return $this
      */
-    public function registerDependency($className, $persistent = true)
+    public function registerDependency($className, $persistent = true, $instance = null)
     {
 
         if (!($this instanceof ContainerInterface))
@@ -109,7 +99,7 @@ trait ContainerTrait
                 ContainerTrait::class.", but doesnt implement ".ContainerInterface::class
             );
 
-        if ($this->hasDependency($className))
+        if (isset($this->_dependencies[$className]))
             throw new \RuntimeException(
                 "Failed to register dependency $className: A dependency ".
                 "of this type is already registered. Use a sub-class to ".
@@ -117,8 +107,8 @@ trait ContainerTrait
             );
 
         /** @var ContainerInterface|ContainerTrait $this */
-        $dep = new Dependency($className, $persistent);
-        $this->_dependencies[] = $dep;
+        $dep = new Dependency($className, $persistent, $instance);
+        $this->_dependencies[$className] = $dep;
 
         //TODO: ->analyze is the workhorse, this should be cached somehow
         $dep->analyze()
@@ -133,7 +123,6 @@ trait ContainerTrait
     public function registerDependencyInstance($instance)
     {
 
-        $this->_dependencies[] = new Dependency(get_class($instance), true, null, null, $instance);
-        return $this;
+        return $this->registerDependency(get_class($instance), true, $instance);
     }
 }

@@ -30,4 +30,21 @@ class Arg extends Setter
 
         return $this->_optional;
     }
+
+    public function serialize()
+    {
+
+        return serialize([
+            'optional' => $this->_optional,
+            'parent' => parent::serialize()
+        ]);
+    }
+
+    public function unserialize($serialized)
+    {
+
+        $values = unserialize($serialized);
+        $this->_optional = $values['optional'];
+        parent::unserialize($values['parent']);
+    }
 }

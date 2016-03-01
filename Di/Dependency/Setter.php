@@ -4,7 +4,7 @@ namespace Tale\Di\Dependency;
 
 use Tale\Di\Dependency;
 
-class Setter
+class Setter implements \Serializable
 {
 
     private $_name;
@@ -64,5 +64,24 @@ class Setter
         $this->_value = $value;
 
         return $this;
+    }
+
+    public function serialize()
+    {
+
+        return serialize([
+            'name' => $this->_name,
+            'className' => $this->_className,
+            'value' => $this->_value
+        ]);
+    }
+
+    public function unserialize($serialized)
+    {
+
+        $data = unserialize($serialized);
+        $this->_name = $data['name'];
+        $this->_className = $data['className'];
+        $this->_value = $data['value'];
     }
 }
