@@ -7,7 +7,7 @@ use Tale\Di\Dependency;
 class Arg extends Setter
 {
 
-    private $_optional;
+    private $optional;
 
     /**
      * Arg constructor.
@@ -22,20 +22,20 @@ class Arg extends Setter
 
         parent::__construct($name, $className, $value);
 
-        $this->_optional = $optional;
+        $this->optional = $optional;
     }
 
     public function isOptional()
     {
 
-        return $this->_optional;
+        return $this->optional;
     }
 
     public function serialize()
     {
 
         return serialize([
-            'optional' => $this->_optional,
+            'optional' => $this->optional,
             'parent' => parent::serialize()
         ]);
     }
@@ -44,7 +44,7 @@ class Arg extends Setter
     {
 
         $values = unserialize($serialized);
-        $this->_optional = $values['optional'];
+        $this->optional = $values['optional'];
         parent::unserialize($values['parent']);
     }
 }

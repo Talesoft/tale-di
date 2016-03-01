@@ -17,7 +17,7 @@ trait ContainerTrait
      *
      * @var Dependency[]
      */
-    private $_dependencies = [];
+    private $dependencies = [];
 
     /**
      * Returns all dependencies registered on this container.
@@ -26,7 +26,7 @@ trait ContainerTrait
      */
     public function getDependencies()
     {
-        return $this->_dependencies;
+        return $this->dependencies;
     }
 
     /**
@@ -40,15 +40,15 @@ trait ContainerTrait
     {
 
         //Exact matches are found directly
-        if (isset($this->_dependencies[$className]))
-            return $this->_dependencies[$className];
+        if (isset($this->dependencies[$className]))
+            return $this->dependencies[$className];
 
         //After that we search for a sub-class
-        $depClassNames = array_reverse(array_keys($this->_dependencies));
+        $depClassNames = array_reverse(array_keys($this->dependencies));
         foreach ($depClassNames as $depClassName) {
 
             if (is_a($depClassName, $className, true))
-                return $this->_dependencies[$depClassName];
+                return $this->dependencies[$depClassName];
         }
 
         return null;
@@ -102,7 +102,7 @@ trait ContainerTrait
                 ContainerTrait::class.", but doesnt implement ".ContainerInterface::class
             );
 
-        if (isset($this->_dependencies[$className]))
+        if (isset($this->dependencies[$className]))
             throw new DiException(
                 "Failed to register dependency $className: A dependency ".
                 "of this type is already registered. Use a sub-class to ".
@@ -111,7 +111,7 @@ trait ContainerTrait
 
         /** @var ContainerInterface|ContainerTrait $this */
         $dep = new Dependency($className, $persistent, $instance);
-        $this->_dependencies[$className] = $dep;
+        $this->dependencies[$className] = $dep;
 
         //TODO: ->analyze is the workhorse, this should be cached somehow
         $dep->analyze()

@@ -7,16 +7,16 @@ use Tale\Di\Dependency;
 class Setter implements \Serializable
 {
 
-    private $_name;
-    private $_className;
-    private $_value;
+    private $name;
+    private $className;
+    private $value;
 
     public function __construct($name, $className, Dependency $value = null)
     {
 
-        $this->_name = $name;
-        $this->_className = $className;
-        $this->_value = null;
+        $this->name = $name;
+        $this->className = $className;
+        $this->value = null;
 
         if ($value)
             $this->setValue($value);
@@ -27,7 +27,7 @@ class Setter implements \Serializable
      */
     public function getName()
     {
-        return $this->_name;
+        return $this->name;
     }
 
     /**
@@ -35,7 +35,7 @@ class Setter implements \Serializable
      */
     public function getClassName()
     {
-        return $this->_className;
+        return $this->className;
     }
 
     /**
@@ -43,7 +43,7 @@ class Setter implements \Serializable
      */
     public function getValue()
     {
-        return $this->_value;
+        return $this->value;
     }
 
     /**
@@ -54,14 +54,14 @@ class Setter implements \Serializable
     public function setValue(Dependency $value)
     {
 
-        if (!is_a($value->getClassName(), $this->_className, true))
+        if (!is_a($value->getClassName(), $this->className, true))
             throw new \RuntimeException(
-                "Failed to set `{$this->_name}`-value: ".
+                "Failed to set `{$this->name}`-value: ".
                 "Passed value `".$value->getClassName()."` ".
-                "is not a valid `".$this->_className."` instance"
+                "is not a valid `".$this->className."` instance"
             );
 
-        $this->_value = $value;
+        $this->value = $value;
 
         return $this;
     }
@@ -70,9 +70,9 @@ class Setter implements \Serializable
     {
 
         return serialize([
-            'name' => $this->_name,
-            'className' => $this->_className,
-            'value' => $this->_value
+            'name' => $this->name,
+            'className' => $this->className,
+            'value' => $this->value
         ]);
     }
 
@@ -80,8 +80,8 @@ class Setter implements \Serializable
     {
 
         $data = unserialize($serialized);
-        $this->_name = $data['name'];
-        $this->_className = $data['className'];
-        $this->_value = $data['value'];
+        $this->name = $data['name'];
+        $this->className = $data['className'];
+        $this->value = $data['value'];
     }
 }

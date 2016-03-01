@@ -18,27 +18,27 @@ class Dependency implements \Serializable
     /**
      * @var string
      */
-    private $_className;
+    private $className;
 
     /**
      * @var bool
      */
-    private $_persistent;
+    private $persistent;
 
     /**
      * @var object
      */
-    private $_instance;
+    private $instance;
 
     /**
      * @var Arg[]
      */
-    private $_args;
+    private $args;
 
     /**
      * @var Setter[]
      */
-    private $_setters;
+    private $setters;
 
     /**
      * Dependency constructor.
@@ -62,11 +62,11 @@ class Dependency implements \Serializable
                 "any args or setters."
             );
 
-        $this->_className = $className;
-        $this->_persistent = $persistent;
-        $this->_instance = $instance;
-        $this->_args = [];
-        $this->_setters = [];
+        $this->className = $className;
+        $this->persistent = $persistent;
+        $this->instance = $instance;
+        $this->args = [];
+        $this->setters = [];
     }
 
     /**
@@ -75,18 +75,17 @@ class Dependency implements \Serializable
     public function analyze()
     {
 
-        $ref = new \ReflectionClass($this->_className);
+        $ref = new \ReflectionClass($this->className);
 
         if (!$ref->isInstantiable())
             throw new \RuntimeException(
-                "Failed to analyze dependency: {$this->_className} ".
+                "Failed to analyze dependency: {$this->className} ".
                 "is not instantiable"
             );
 
         if ($ref->hasMethod('__construct')) {
 
             $ctor = $ref->getMethod('__construct');
-
             foreach ($ctor->getParameters() as $param) {
 
                 $name = $param->getName();
@@ -99,12 +98,12 @@ class Dependency implements \Serializable
 
                 if (!$className)
                     throw new \RuntimeException(
-                        "Failed to analyze dependency: {$this->_className} ".
+                        "Failed to analyze dependency: {$this->className} ".
                         "Constructor argument $name needs a type-hint with ".
                         "a class or needs to be removed"
                     );
 
-                $this->_args[$name] = new Arg(
+                $this->args[$name] = new Arg(
                     $name,
                     $className,
                     $param->isOptional()
@@ -130,7 +129,7 @@ class Dependency implements \Serializable
             if (count($params) !== 1 || !$className || $params[0]->isOptional())
                 continue;
 
-            $this->_setters[$name] = new Setter(
+            $this->setters[$name] = new Setter(
                 $name,
                 $className
             );
@@ -144,7 +143,7 @@ class Dependency implements \Serializable
      */
     public function getClassName()
     {
-        return $this->_className;
+        return $this->className;
     }
 
     /**
@@ -152,7 +151,7 @@ class Dependency implements \Serializable
      */
     public function getArgs()
     {
-        return $this->_args;
+        return $this->args;
     }
 
     /**
@@ -160,7 +159,7 @@ class Dependency implements \Serializable
      */
     public function getSetters()
     {
-        return $this->_setters;
+        return $this->setters;
     }
 
     /**
@@ -172,13 +171,13 @@ class Dependency implements \Serializable
     public function set($name, Dependency $value)
     {
 
-        if (!isset($this->_args[$name]))
+        if (!isset($this->args[$name]))
             throw new \RuntimeException(
                 "Failed to set arg $name: ".
-                "{$this->_className} has no constructor argument called $name"
+                "{$this->className} has no constructor argument called $name"
             );
 
-        $this->_args[$name]->setValue($value);
+        $this->args[$name]->setValue($value);
         return $this;
     }
 
@@ -191,13 +190,13 @@ class Dependency implements \Serializable
     public function call($name, Dependency $value)
     {
 
-        if (!isset($this->_setters[$name]))
+        if (!isset($this->setters[$name]))
             throw new \RuntimeException(
                 "Failed to set call to setter $name: ".
-                "{$this->_className} has no setter called $name "
+                "{$this->className} has no setter called $name "
             );
 
-        $this->_setters[$name]->setValue($value);
+        $this->setters[$name]->setValue($value);
         return $this;
     }
 
@@ -209,17 +208,17 @@ class Dependency implements \Serializable
     public function getInstance()
     {
 
-        if ($this->_persistent && $this->_instance !== null)
-            return $this->_instance;
+        if ($this->persistent && $this->instance !== null)
+            return $this->instance;
 
         $args = [];
-        foreach ($this->_args as $name => $arg) {
+        foreach ($this->args as $name => $arg) {
 
             $value = $arg->getValue();
 
             if ($value === null && !$arg->isOptional())
                 throw new DiException(
-                    "Failed to create instance of {$this->_className}: ".
+                    "Failed to create instance of {$this->className}: ".
                     "Constructor argument $name is not specified. ".
                     "Register a ".$arg->getClassName()." dependency ".
                     " or make the argument optional."
@@ -233,7 +232,7 @@ class Dependency implements \Serializable
             $args
         );
 
-        foreach ($this->_setters as $name => $setter) {
+        foreach ($this->setters as $name => $setter) {
 
             $value = $setter->getValue();
 
@@ -241,8 +240,8 @@ class Dependency implements \Serializable
                 call_user_func([$instance, $setter->getName()], $value->getInstance());
         }
 
-        if ($this->_persistent)
-            $this->_instance = $instance;
+        if ($this->persistent)
+            $this->instance = $instance;
 
         return $instance;
     }
@@ -265,7 +264,7 @@ class Dependency implements \Serializable
 
                 if ($arg instanceof Arg && !$arg->isOptional())
                     throw new DiException(
-                        "Failed to wire {$this->_className}'s $name-argument :".
+                        "Failed to wire {$this->className}'s $name-argument :".
                         "The DI-container does not contain a $className dependency"
                     );
 
@@ -284,17 +283,17 @@ class Dependency implements \Serializable
     public function wire(ContainerInterface $container)
     {
 
-        $this->_wireSetters($this->_args, $container);
-        $this->_wireSetters($this->_setters, $container);
+        $this->_wireSetters($this->args, $container);
+        $this->_wireSetters($this->setters, $container);
     }
 
     public function serialize()
     {
         return serialize([
-            $this->_className,
-            $this->_persistent,
-            $this->_args,
-            $this->_setters
+            $this->className,
+            $this->persistent,
+            $this->args,
+            $this->setters
         ]);
     }
 
@@ -302,10 +301,10 @@ class Dependency implements \Serializable
     {
 
         list(
-            $this->_className,
-            $this->_persistent,
-            $this->_args,
-            $this->_setters
+            $this->className,
+            $this->persistent,
+            $this->args,
+            $this->setters
         ) = unserialize($serialized);
     }
 }
