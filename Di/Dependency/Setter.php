@@ -27,6 +27,7 @@ class Setter implements \Serializable
      */
     public function getName()
     {
+
         return $this->name;
     }
 
@@ -35,6 +36,7 @@ class Setter implements \Serializable
      */
     public function getClassName()
     {
+
         return $this->className;
     }
 
@@ -43,6 +45,7 @@ class Setter implements \Serializable
      */
     public function getValue()
     {
+
         return $this->value;
     }
 
@@ -70,9 +73,9 @@ class Setter implements \Serializable
     {
 
         return serialize([
-            'name' => $this->name,
+            'name'      => $this->name,
             'className' => $this->className,
-            'value' => $this->value
+            'value'     => $this->value
         ]);
     }
 

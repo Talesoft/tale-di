@@ -9,6 +9,8 @@ Dependency Injection.
 Tale DI can automatically inject constructor arguments and `setXxx`-style setter values to instances.
 The DI container will manage these dependencies and lazily wire them together.
 
+A really strict pattern ist enforced, but if you stick to it, this library can be really handy.
+
 # Installation
 
 Install via Composer
@@ -21,7 +23,6 @@ composer install
 # Usage
 
 ```php
-
 use Tale\Di\ContainerInterface;
 use Tale\Di\ContainerTrait;
 
@@ -36,17 +37,17 @@ class Config {}
 class Service
 {
 
-    private $_config;
+    private $config;
 
     public function __construct(Config $config)
     {
 
-        $this->_config = $config;
+        $this->config = $config;
     }
 
     public function getConfig()
     {
-        return $this->_config;
+        return $this->config;
     }
 }
 
@@ -57,18 +58,18 @@ class Cache extends Service
 class Renderer extends Service
 {
 
-    private $_cache;
+    private $cache;
 
     public function setCache(Cache $cache)
     {
 
-        $this->_cache = $cache;
+        $this->cache = $cache;
         return $this;
     }
 
     public function getCache()
     {
-        return $this->_cache;
+        return $this->cache;
     }
 
     public function render()
@@ -85,5 +86,4 @@ $app->register(Cache::class);
 $app->register(AwesomeRenderer::class);
 
 var_dump($app->get(Renderer::class)->render()); //"AwesomeRenderer", Cache and Config are auto-wired and available
-    
 ```

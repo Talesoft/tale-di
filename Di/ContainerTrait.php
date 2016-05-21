@@ -26,57 +26,50 @@ trait ContainerTrait
      */
     public function getDependencies()
     {
+
         return $this->dependencies;
     }
 
     /**
      * Finds a dependency based on its class-name.
      *
-     * @param $className
+     * @param      $className
      *
-     * @return Dependency|null
+     * @param bool $reverse
+     *
+     * @return null|Dependency
      */
-    public function getDependency($className)
+    public function getDependency($className, $reverse = true)
     {
 
         //Exact matches are found directly
         if (isset($this->dependencies[$className]))
             return $this->dependencies[$className];
+        
+        $depClassNames = array_keys($this->dependencies);
 
-        //After that we search for a sub-class
-        $depClassNames = array_reverse(array_keys($this->dependencies));
-        foreach ($depClassNames as $depClassName) {
+        if ($reverse)
+            $depClassNames = array_reverse($depClassNames);
 
+        foreach ($depClassNames as $depClassName)
             if (is_a($depClassName, $className, true))
                 return $this->dependencies[$depClassName];
-        }
 
         return null;
     }
 
     /**
-     * @param $className
+     * @param      $className
      *
-     * @return bool
-     */
-    public function hasDependency($className)
-    {
-
-        return $this->getDependency($className) !== null;
-    }
-
-    /**
-     * @param $className
+     * @param bool $reverse
      *
      * @return null|object
-     * @throws \Exception
+     * @throws DiException
      */
-    public function getDependencyInstance($className)
+    public function get($className, $reverse = true)
     {
 
-        $dep = $this->getDependency($className);
-
-        if (!$dep)
+        if (!($dep = $this->getDependency($className, $reverse)))
             throw new DiException(
                 "Failed to locate dependency $className. Register it ".
                 "with \$container->registerDependency($className::class)"
@@ -93,7 +86,7 @@ trait ContainerTrait
      * @return $this
      * @throws DiException
      */
-    public function registerDependency($className, $persistent = true, $instance = null)
+    public function register($className, $persistent = true, $instance = null)
     {
 
         if (!($this instanceof ContainerInterface))
@@ -113,7 +106,7 @@ trait ContainerTrait
         $dep = new Dependency($className, $persistent, $instance);
         $this->dependencies[$className] = $dep;
 
-        //TODO: ->analyze is the workhorse, this should be cached somehow
+        //TODO: those two are the workhorses, but everything should be prepared for caching. Just need an elegant way...
         $dep->analyze()
             ->wire($this);
 
@@ -121,11 +114,20 @@ trait ContainerTrait
     }
 
     /**
+     * @param $instance
+     *
      * @return $this
+     * @throws DiException
      */
-    public function registerDependencyInstance($instance)
+    public function registerInstance($instance)
     {
 
-        return $this->registerDependency(get_class($instance), true, $instance);
+        return $this->register(get_class($instance), true, $instance);
+    }
+    
+    public function registerSelf()
+    {
+
+        return $this->registerInstance($this);
     }
 }

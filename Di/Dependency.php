@@ -2,10 +2,12 @@
 
 namespace Tale\Di;
 
+use Exception;
 use Tale\Di\Dependency\Arg;
 use Tale\Di\Dependency\Setter;
 use Tale\DiException;
 use Tale\Factory;
+use Tale\FactoryException;
 
 /**
  * Class Dependency
@@ -83,6 +85,9 @@ class Dependency implements \Serializable
                 "is not instantiable"
             );
 
+        $this->args = [];
+        $this->setters = [];
+
         if ($ref->hasMethod('__construct')) {
 
             $ctor = $ref->getMethod('__construct');
@@ -103,11 +108,7 @@ class Dependency implements \Serializable
                         "a class or needs to be removed"
                     );
 
-                $this->args[$name] = new Arg(
-                    $name,
-                    $className,
-                    $param->isOptional()
-                );
+                $this->args[$name] = new Arg($name, $className, $param->isOptional());
             }
         }
 
@@ -115,7 +116,8 @@ class Dependency implements \Serializable
 
             $name = $method->getName();
             if ($method->isStatic() || !$method->isPublic()
-             || strlen($name) < 3 || substr($name, 0, 3) !== 'set')
+                || strlen($name) < 3 || substr($name, 0, 3) !== 'set'
+            )
                 continue;
 
             $params = $method->getParameters();
@@ -129,10 +131,7 @@ class Dependency implements \Serializable
             if (count($params) !== 1 || !$className || $params[0]->isOptional())
                 continue;
 
-            $this->setters[$name] = new Setter(
-                $name,
-                $className
-            );
+            $this->setters[$name] = new Setter($name, $className);
         }
 
         return $this;
@@ -143,6 +142,7 @@ class Dependency implements \Serializable
      */
     public function getClassName()
     {
+
         return $this->className;
     }
 
@@ -151,6 +151,7 @@ class Dependency implements \Serializable
      */
     public function getArgs()
     {
+
         return $this->args;
     }
 
@@ -159,12 +160,15 @@ class Dependency implements \Serializable
      */
     public function getSetters()
     {
+
         return $this->setters;
     }
 
     /**
-     * @param                     $name
-     * @param \Tale\Di\Dependency $value
+     * Sets a constructor argument value by its name
+     *
+     * @param string $name
+     * @param Dependency $value
      *
      * @return $this
      */
@@ -178,12 +182,15 @@ class Dependency implements \Serializable
             );
 
         $this->args[$name]->setValue($value);
+
         return $this;
     }
 
     /**
-     * @param                     $name
-     * @param \Tale\Di\Dependency $value
+     * Sets a setter value by the setter name
+     *
+     * @param string $name
+     * @param Dependency  $value
      *
      * @return $this
      */
@@ -197,13 +204,14 @@ class Dependency implements \Serializable
             );
 
         $this->setters[$name]->setValue($value);
+
         return $this;
     }
 
     /**
      * @return null|object
-     * @throws \Exception
-     * @throws \Tale\FactoryException
+     * @throws Exception
+     * @throws FactoryException
      */
     public function getInstance()
     {
@@ -219,25 +227,22 @@ class Dependency implements \Serializable
             if ($value === null && !$arg->isOptional())
                 throw new DiException(
                     "Failed to create instance of {$this->className}: ".
-                    "Constructor argument $name is not specified. ".
-                    "Register a ".$arg->getClassName()." dependency ".
+                    "Constructor argument $name is has not received any existing value yet. ".
+                    "Register a ".$arg->getClassName()." dependency on the wired container ".
                     " or make the argument optional."
                 );
 
             $args[] = $value !== null ? $value->getInstance() : null;
         }
 
-        $instance = Factory::createInstance(
-            $this->getClassName(),
-            $args
-        );
+        $instance = Factory::createInstance($this->getClassName(), $args);
 
         foreach ($this->setters as $name => $setter) {
 
             $value = $setter->getValue();
 
             if ($value !== null)
-                call_user_func([$instance, $setter->getName()], $value->getInstance());
+                $instance->$name($value->getInstance());
         }
 
         if ($this->persistent)
@@ -253,14 +258,14 @@ class Dependency implements \Serializable
      * @return $this
      * @throws DiException
      */
-    private function _wireSetters(array $setters, ContainerInterface $container)
+    private function wireSetters(array $setters, ContainerInterface $container)
     {
 
+        //Wire forward (Dependencies of this instance on this instance)
         foreach ($setters as $name => $arg) {
 
             $className = $arg->getClassName();
-
-            if (!$container->hasDependency($className)) {
+            if (!($dep = $container->getDependency($className))) {
 
                 if ($arg instanceof Arg && !$arg->isOptional())
                     throw new DiException(
@@ -271,24 +276,46 @@ class Dependency implements \Serializable
                 continue;
             }
 
-            $arg->setValue($container->getDependency($className));
+            $arg->setValue($dep);
         }
+
+        /* TODO: Wire backward ((Persistent) dependencies receive this instance if required)???
+        foreach ($container->getDependencies() as $dep) {
+
+            foreach ($dep->getArgs() as $arg) {
+
+                if (!$arg->getValue() && is_a($arg->getClassName(), $this->getClassName(), true))
+                    $arg->setValue($this);
+            }
+
+            foreach ($dep->getSetters() as $setter) {
+
+                if (!$setter->getValue() && is_a($setter->getClassName(), $setter->getClassName(), true))
+                    $setter->setValue($this);
+            }
+        }
+        */
 
         return $this;
     }
 
     /**
-     * @param \Tale\Di\ContainerInterface $container
+     * @param ContainerInterface $container
+     *
+     * @return $this
      */
     public function wire(ContainerInterface $container)
     {
 
-        $this->_wireSetters($this->args, $container);
-        $this->_wireSetters($this->setters, $container);
+        $this->wireSetters($this->args, $container);
+        $this->wireSetters($this->setters, $container);
+
+        return $this;
     }
 
     public function serialize()
     {
+
         return serialize([
             $this->className,
             $this->persistent,

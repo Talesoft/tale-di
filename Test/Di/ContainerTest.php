@@ -92,18 +92,18 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     {
 
         $app = new App();
-        $app->registerDependencyInstance($app);
-        $app->registerDependency(Config::class);
-        $app->registerDependency(Cache::class);
-        $app->registerDependency(AwesomeRenderer::class);
+        $app->registerInstance($app);
+        $app->register(Config::class);
+        $app->register(Cache::class);
+        $app->register(AwesomeRenderer::class);
 
-        $renderer = $app->getDependencyInstance(Renderer::class);
+        $renderer = $app->get(Renderer::class);
         $this->assertInstanceOf(AwesomeRenderer::class, $renderer);
         $this->assertEquals(AwesomeRenderer::class, $renderer->render());
         $this->assertInstanceOf(Config::class, $renderer->getConfig());
         $this->assertInstanceOf(App::class, $renderer->getApp());
 
-        $cache = $app->getDependencyInstance(Cache::class);
+        $cache = $app->get(Cache::class);
         $this->assertInstanceOf(Cache::class, $cache);
         $this->assertInstanceOf(Config::class, $cache->getConfig());
     }
