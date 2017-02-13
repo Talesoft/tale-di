@@ -15,12 +15,12 @@ class Config {}
 class Service
 {
 
-    private $_config;
+    private $config;
 
     public function __construct(Config $config)
     {
 
-        $this->_config = $config;
+        $this->config = $config;
     }
 
     /**
@@ -28,7 +28,7 @@ class Service
      */
     public function getConfig()
     {
-        return $this->_config;
+        return $this->config;
     }
 }
 
@@ -39,12 +39,12 @@ class Cache extends Service
 class Renderer extends Service
 {
 
-    private $_cache;
+    private $cache;
 
     public function setCache(Cache $cache)
     {
 
-        $this->_cache = $cache;
+        $this->cache = $cache;
         return $this;
     }
 
@@ -53,7 +53,7 @@ class Renderer extends Service
      */
     public function getCache()
     {
-        return $this->_cache;
+        return $this->cache;
     }
 
     public function render()
@@ -66,18 +66,18 @@ class Renderer extends Service
 class AwesomeRenderer extends Renderer
 {
 
-    private $_app;
+    private $app;
 
     public function setApp(App $app)
     {
 
-        $this->_app = $app;
+        $this->app = $app;
     }
 
     public function getApp()
     {
 
-        return $this->_app;
+        return $this->app;
     }
 }
 
@@ -92,10 +92,22 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     {
 
         $app = new App();
-        $app->registerInstance($app);
+        $app->registerSelf();
         $app->register(Config::class);
         $app->register(Cache::class);
         $app->register(AwesomeRenderer::class);
+
+        $renderer = $app->get(Renderer::class);
+        $this->assertInstanceOf(AwesomeRenderer::class, $renderer);
+        $this->assertEquals(AwesomeRenderer::class, $renderer->render());
+        $this->assertInstanceOf(Config::class, $renderer->getConfig());
+        $this->assertInstanceOf(App::class, $renderer->getApp());
+
+        $cache = $app->get(Cache::class);
+        $this->assertInstanceOf(Cache::class, $cache);
+        $this->assertInstanceOf(Config::class, $cache->getConfig());
+
+        $app = unserialize(serialize($app));
 
         $renderer = $app->get(Renderer::class);
         $this->assertInstanceOf(AwesomeRenderer::class, $renderer);

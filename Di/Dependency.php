@@ -3,7 +3,8 @@
 namespace Tale\Di;
 
 use Exception;
-use Tale\Di\Dependency\Arg;
+use Tale\Di\Dependency\Argument;
+use Tale\Di\Dependency\NotFoundException;
 use Tale\Di\Dependency\Setter;
 use Tale\DiException;
 use Tale\Factory;
@@ -33,9 +34,9 @@ class Dependency implements \Serializable
     private $instance;
 
     /**
-     * @var Arg[]
+     * @var Argument[]
      */
-    private $args;
+    private $arguments;
 
     /**
      * @var Setter[]
@@ -60,19 +61,54 @@ class Dependency implements \Serializable
         if ($instance && !$persistent)
             throw new \InvalidArgumentException(
                 "Failed to set pre-defined instance: Dependencies with a ".
-                "pre-defined instance need to be persistent and can't have ".
-                "any args or setters."
+                "pre-defined instance need to be persistent (Set argument 2 to true) and can't have ".
+                "any arguments or setters."
+            );
+
+        if ($instance && !is_object($instance))
+            throw new \InvalidArgumentException(
+                "Argument 3 passed to ".self::class."->__construct needs to be object or null, "
+                .gettype($instance)." given"
             );
 
         $this->className = $className;
         $this->persistent = $persistent;
         $this->instance = $instance;
-        $this->args = [];
+        $this->arguments = [];
         $this->setters = [];
     }
 
     /**
+     * @return string
+     */
+    public function getClassName()
+    {
+
+        return $this->className;
+    }
+
+    /**
+     * @return Argument[]
+     */
+    public function getArguments()
+    {
+
+        return $this->arguments;
+    }
+
+    /**
+     * @return Setter[]
+     */
+    public function getSetters()
+    {
+
+        return $this->setters;
+    }
+
+    /**
      * @return $this
+     *
+     * @throws DiException
      */
     public function analyze()
     {
@@ -80,12 +116,12 @@ class Dependency implements \Serializable
         $ref = new \ReflectionClass($this->className);
 
         if (!$ref->isInstantiable())
-            throw new \RuntimeException(
+            throw new DiException(
                 "Failed to analyze dependency: {$this->className} ".
                 "is not instantiable"
             );
 
-        $this->args = [];
+        $this->arguments = [];
         $this->setters = [];
 
         if ($ref->hasMethod('__construct')) {
@@ -102,13 +138,13 @@ class Dependency implements \Serializable
                 $className = $className->getName();
 
                 if (!$className)
-                    throw new \RuntimeException(
-                        "Failed to analyze dependency: {$this->className} ".
-                        "Constructor argument $name needs a type-hint with ".
-                        "a class or needs to be removed"
+                    throw new DiException(
+                        "Failed to analyze dependency: {$this->className} "
+                        ."Constructor argument $name needs a type-hint with "
+                        ."for a valid class name or needs to be removed"
                     );
 
-                $this->args[$name] = new Arg($name, $className, $param->isOptional());
+                $this->arguments[$name] = new Argument($name, $className, $param->isOptional());
             }
         }
 
@@ -121,6 +157,10 @@ class Dependency implements \Serializable
                 continue;
 
             $params = $method->getParameters();
+
+            if (count($params) !== 1)
+                continue;
+
             $className = $params[0]->getClass();
 
             if (!$className)
@@ -128,40 +168,13 @@ class Dependency implements \Serializable
 
             $className = $className->getName();
 
-            if (count($params) !== 1 || !$className || $params[0]->isOptional())
+            if (!$className)
                 continue;
 
             $this->setters[$name] = new Setter($name, $className);
         }
 
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getClassName()
-    {
-
-        return $this->className;
-    }
-
-    /**
-     * @return Arg[]
-     */
-    public function getArgs()
-    {
-
-        return $this->args;
-    }
-
-    /**
-     * @return Setter[]
-     */
-    public function getSetters()
-    {
-
-        return $this->setters;
     }
 
     /**
@@ -175,13 +188,13 @@ class Dependency implements \Serializable
     public function set($name, Dependency $value)
     {
 
-        if (!isset($this->args[$name]))
+        if (!isset($this->arguments[$name]))
             throw new \RuntimeException(
                 "Failed to set arg $name: ".
                 "{$this->className} has no constructor argument called $name"
             );
 
-        $this->args[$name]->setValue($value);
+        $this->arguments[$name]->setValue($value);
 
         return $this;
     }
@@ -220,7 +233,7 @@ class Dependency implements \Serializable
             return $this->instance;
 
         $args = [];
-        foreach ($this->args as $name => $arg) {
+        foreach ($this->arguments as $name => $arg) {
 
             $value = $arg->getValue();
 
@@ -235,7 +248,8 @@ class Dependency implements \Serializable
             $args[] = $value !== null ? $value->getInstance() : null;
         }
 
-        $instance = Factory::createInstance($this->getClassName(), $args);
+        $className = $this->className;
+        $instance = new $className(...$args);
 
         foreach ($this->setters as $name => $setter) {
 
@@ -252,7 +266,7 @@ class Dependency implements \Serializable
     }
 
     /**
-     * @param Arg[]              $setters
+     * @param Argument[]         $setters
      * @param ContainerInterface $container
      *
      * @return $this
@@ -267,10 +281,10 @@ class Dependency implements \Serializable
             $className = $arg->getClassName();
             if (!($dep = $container->getDependency($className))) {
 
-                if ($arg instanceof Arg && !$arg->isOptional())
-                    throw new DiException(
-                        "Failed to wire {$this->className}'s $name-argument :".
-                        "The DI-container does not contain a $className dependency"
+                if ($arg instanceof Argument && !$arg->isOptional())
+                    throw new NotFoundException(
+                        "Failed to wire {$this->className}'s $name-argument:"
+                        ."The DI-container does not contain a $className dependency"
                     );
 
                 continue;
@@ -307,7 +321,7 @@ class Dependency implements \Serializable
     public function wire(ContainerInterface $container)
     {
 
-        $this->wireSetters($this->args, $container);
+        $this->wireSetters($this->arguments, $container);
         $this->wireSetters($this->setters, $container);
 
         return $this;
@@ -319,7 +333,7 @@ class Dependency implements \Serializable
         return serialize([
             $this->className,
             $this->persistent,
-            $this->args,
+            $this->arguments,
             $this->setters
         ]);
     }
@@ -330,8 +344,10 @@ class Dependency implements \Serializable
         list(
             $this->className,
             $this->persistent,
-            $this->args,
+            $this->arguments,
             $this->setters
         ) = unserialize($serialized);
+
+        $this->instance = null;
     }
 }

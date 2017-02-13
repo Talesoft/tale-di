@@ -2,4 +2,8 @@
 
 namespace Tale;
 
-class DiException extends \Exception {}
+use Psr\Container\ContainerExceptionInterface;
+
+class DiException extends \RuntimeException implements ContainerExceptionInterface
+{
+}

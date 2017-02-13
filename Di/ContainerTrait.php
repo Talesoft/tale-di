@@ -2,6 +2,7 @@
 
 namespace Tale\Di;
 
+use Tale\Di\Dependency\NotFoundException;
 use Tale\DiException;
 
 /**
@@ -20,9 +21,12 @@ trait ContainerTrait
     private $dependencies = [];
 
     /**
-     * Returns all dependencies registered on this container.
-     *
-     * @return Dependency[]
+     * @var Dependency[]
+     */
+    private $resolvedDependencies = [];
+
+    /**
+     * {@inheritdoc}
      */
     public function getDependencies()
     {
@@ -31,60 +35,64 @@ trait ContainerTrait
     }
 
     /**
-     * Finds a dependency based on its class-name.
-     *
-     * @param      $className
-     *
-     * @param bool $reverse
-     *
-     * @return null|Dependency
+     * {@inheritdoc}
      */
-    public function getDependency($className, $reverse = true)
+    public function getDependency($className)
     {
 
-        //Exact matches are found directly
-        if (isset($this->dependencies[$className]))
-            return $this->dependencies[$className];
-        
-        $depClassNames = array_keys($this->dependencies);
+        if (isset($this->resolvedDependencies[$className]))
+            return $this->resolvedDependencies[$className];
 
-        if ($reverse)
-            $depClassNames = array_reverse($depClassNames);
+        $result = null;
+        if (isset($this->dependencies[$className])) {
 
-        foreach ($depClassNames as $depClassName)
-            if (is_a($depClassName, $className, true))
-                return $this->dependencies[$depClassName];
+            //Exact matches are found directly
+            $result = $this->dependencies[$className];
+        } else {
 
-        return null;
+            //Traverse the dep list to find our dep
+            $depClassNames = array_keys($this->dependencies);
+
+            foreach ($depClassNames as $depClassName)
+                if (is_a($depClassName, $className, true))
+                    $result = $this->dependencies[$depClassName];
+
+        }
+
+        if (!$result)
+            return null;
+
+        $this->resolvedDependencies[$className] = $result;
+
+        return $result;
     }
 
     /**
-     * @param      $className
-     *
-     * @param bool $reverse
-     *
-     * @return null|object
-     * @throws DiException
+     * {@inheritdoc}
      */
-    public function get($className, $reverse = true)
+    public function has($className)
     {
 
-        if (!($dep = $this->getDependency($className, $reverse)))
-            throw new DiException(
+        return $this->getDependency($className) !== null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get($className)
+    {
+
+        if (($dep = $this->getDependency($className)) === null)
+            throw new NotFoundException(
                 "Failed to locate dependency $className. Register it ".
-                "with \$container->registerDependency($className::class)"
+                "with \$container->register($className::class)"
             );
 
         return $dep->getInstance();
     }
 
     /**
-     * @param        $className
-     * @param bool   $persistent
-     * @param object $instance
-     *
-     * @return $this
-     * @throws DiException
+     * {@inheritdoc}
      */
     public function register($className, $persistent = true, $instance = null)
     {
@@ -104,9 +112,9 @@ trait ContainerTrait
 
         /** @var ContainerInterface|ContainerTrait $this */
         $dep = new Dependency($className, $persistent, $instance);
-        $this->dependencies[$className] = $dep;
+        //Prepend rather than append for iteration reasons (Lastly added dependencies should be found first)
+        $this->dependencies = [$className => $dep] + $this->dependencies;
 
-        //TODO: those two are the workhorses, but everything should be prepared for caching. Just need an elegant way...
         $dep->analyze()
             ->wire($this);
 
@@ -114,20 +122,35 @@ trait ContainerTrait
     }
 
     /**
-     * @param $instance
-     *
-     * @return $this
-     * @throws DiException
+     * {@inheritdoc}
      */
     public function registerInstance($instance)
     {
 
         return $this->register(get_class($instance), true, $instance);
     }
-    
+
+    /**
+     * {@inheritdoc}
+     */
     public function registerSelf()
     {
 
         return $this->registerInstance($this);
+    }
+    
+    public function serialize()
+    {
+        
+        return serialize([
+            $this->dependencies,
+            $this->resolvedDependencies
+        ]);
+    }
+
+    public function unserialize($data)
+    {
+
+        list($this->dependencies, $this->resolvedDependencies) = unserialize($data);
     }
 }

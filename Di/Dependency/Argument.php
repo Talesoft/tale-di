@@ -4,8 +4,9 @@ namespace Tale\Di\Dependency;
 
 use Tale\Di\Dependency;
 
-class Arg extends Setter
+class Argument implements \Serializable
 {
+    use ArgumentTrait;
 
     private $optional;
 
@@ -17,10 +18,15 @@ class Arg extends Setter
      * @param bool       $optional
      * @param Dependency $value
      */
-    public function __construct($name, $className, $optional, Dependency $value = null)
+    public function __construct($name, $className, $optional = false, Dependency $value = null)
     {
 
-        parent::__construct($name, $className, $value);
+        $this->name = $name;
+        $this->className = $className;
+        $this->value = null;
+
+        if ($value)
+            $this->setValue($value);
 
         $this->optional = $optional;
     }
@@ -35,16 +41,16 @@ class Arg extends Setter
     {
 
         return serialize([
-            'optional' => $this->optional,
-            'parent' => parent::serialize()
+            $this->name,
+            $this->className,
+            $this->value,
+            $this->optional
         ]);
     }
 
     public function unserialize($serialized)
     {
 
-        $values = unserialize($serialized);
-        $this->optional = $values['optional'];
-        parent::unserialize($values['parent']);
+        list($this->name, $this->className, $this->value, $this->optional) = unserialize($serialized);
     }
 }
