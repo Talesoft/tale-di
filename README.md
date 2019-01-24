@@ -246,7 +246,7 @@ $dependencies = [
     }),
     
     //Same as CallbackDependency, but will cache the result between each ->get() call
-    'lazy factory' => new LazyCallbackDependency(function () {
+    'lazy factory' => new PersistentCallbackDependency(function () {
         return (new SomeHeavyWorker())->getResult();
     })
 ];

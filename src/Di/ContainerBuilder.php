@@ -6,7 +6,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Tale\Cache\Pool\RuntimePool;
 use Tale\Di\Dependency\CallbackDependency;
-use Tale\Di\Dependency\LazyCallbackDependency;
+use Tale\Di\Dependency\PersistentCallbackDependency;
 use Tale\Di\Dependency\ParameterDependency;
 use Tale\Di\Dependency\ValueDependency;
 use Tale\Di\ParameterReader\DocCommentParameterReader;
@@ -154,7 +154,7 @@ final class ContainerBuilder implements ContainerBuilderInterface
                     );
                 }
 
-                $dependencies[$className] = new LazyCallbackDependency(
+                $dependencies[$className] = new PersistentCallbackDependency(
                     function (ContainerInterface $container) use ($className, $params) {
                         return new $className(...array_map(function (DependencyInterface $dep) use ($container) {
                             return $dep->get($container);
@@ -182,7 +182,7 @@ final class ContainerBuilder implements ContainerBuilderInterface
                 }
             );
 
-            $dependencies["array<{$tag}>"] = new LazyCallbackDependency(
+            $dependencies["array<{$tag}>"] = new PersistentCallbackDependency(
                 function (ContainerInterface $container) use ($tag) {
                     return iterator_to_array($container->get("iterable<{$tag}>"));
                 }

@@ -5,7 +5,7 @@ namespace Tale\Di\Dependency;
 use Psr\Container\ContainerInterface;
 use Tale\Di\DependencyInterface;
 
-final class LazyCallbackDependency implements DependencyInterface
+final class PersistentCallbackDependency implements DependencyInterface
 {
     /** @var callable */
     private $callback;
