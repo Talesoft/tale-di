@@ -21,7 +21,8 @@
         "psr-4": {
             "Tale\\": "src",
             "Tale\\Test\\": "tests"
-        }
+        },
+        "functions": ["src/functions.php"]
     },
     "provides": {
         "psr/container-implementation": "~1.0"
