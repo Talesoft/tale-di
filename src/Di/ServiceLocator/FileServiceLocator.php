@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Tale\Di\ClassLocator;
+namespace Tale\Di\ServiceLocator;
 
-use Tale\Di\ClassLocatorInterface;
+use Tale\Di\ServiceLocatorInterface;
 
-final class FileClassLocator implements ClassLocatorInterface
+final class FileServiceLocator implements ServiceLocatorInterface
 {
     /** @var string */
     private $path;

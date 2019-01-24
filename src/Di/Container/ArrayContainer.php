@@ -3,16 +3,15 @@
 namespace Tale\Di\Container;
 
 use Psr\Container\ContainerInterface;
-use Tale\NotFoundException;
 
 final class ArrayContainer implements ContainerInterface
 {
     /** @var array */
-    private $instances;
+    private $values;
 
-    public function __construct(array $instances)
+    public function __construct(array $values)
     {
-        $this->instances = $instances;
+        $this->values = $values;
     }
 
     public function get($id)
@@ -20,11 +19,11 @@ final class ArrayContainer implements ContainerInterface
         if (!$this->has($id)) {
             throw new NotFoundException("{$id} was not found in container");
         }
-        return $this->instances[$id];
+        return $this->values[$id];
     }
 
     public function has($id): bool
     {
-        return array_key_exists($id, $this->instances);
+        return array_key_exists($id, $this->values);
     }
 }

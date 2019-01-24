@@ -4,7 +4,7 @@ namespace Tale\Test\Di;
 
 use PHPUnit\Framework\TestCase;
 use Tale\Cache\Pool\NullPool;
-use Tale\Di\ClassLocator\GlobClassLocator;
+use Tale\Di\ServiceLocator\GlobServiceLocator;
 use Tale\Di\ContainerBuilder;
 use Tale\Test\Di\TestApp\App;
 

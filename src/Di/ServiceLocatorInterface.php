@@ -2,7 +2,7 @@
 
 namespace Tale\Di;
 
-interface ClassLocatorInterface
+interface ServiceLocatorInterface
 {
     public function locate(): iterable;
 }

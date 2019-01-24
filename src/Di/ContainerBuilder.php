@@ -33,8 +33,8 @@ final class ContainerBuilder implements ContainerBuilderInterface
     /** @var object[] */
     private $registeredInstances = [];
 
-    /** @var ClassLocatorInterface[] */
-    private $classLocators;
+    /** @var ServiceLocatorInterface[] */
+    private $serviceLocators;
 
     /**
      * ContainerBuilder constructor.
@@ -81,9 +81,9 @@ final class ContainerBuilder implements ContainerBuilderInterface
         $this->registeredInstances[get_class($instance)] = $instance;
     }
 
-    public function addLocator(ClassLocatorInterface $locator): void
+    public function addLocator(ServiceLocatorInterface $locator): void
     {
-        $this->classLocators[] = $locator;
+        $this->serviceLocators[] = $locator;
     }
 
     /**
@@ -272,7 +272,7 @@ final class ContainerBuilder implements ContainerBuilderInterface
 
     private function locateClasses(): \Traversable
     {
-        foreach ($this->classLocators as $classLocator) {
+        foreach ($this->serviceLocators as $classLocator) {
             yield from $classLocator->locate();
         }
     }

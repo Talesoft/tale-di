@@ -51,29 +51,29 @@ $container = $builder->build();
 $pdo = $container->get(PDO::class);
 ```
 
-### Class Locators
+### Service Locators
 
 ```
-use Tale\Di\ClassLocator\FileClassLocator;
-use Tale\Di\ClassLocator\DirectoryClassLocator;
-use Tale\Di\ClassLocator\GlobClassLocator;
+use Tale\Di\ServiceLocator\FileServiceLocator;
+use Tale\Di\ServiceLocator\DirectoryServiceLocator;
+use Tale\Di\ServiceLocator\GlobServiceLocator;
 ```
 
 If you don't want to add every single file manually,
-you can also use one of the three Class Locators
+you can also use one of the three service Locators
 that come with Tale DI.
 
 ```php
 $builder->addLocator(
-    new FileClassLocator('src/Classes/MyClass.php')
+    new FileServiceLocator('src/Classes/MyClass.php')
 );
 
 $builder->addLocator(
-    new DirectoryClassLocator('../src')
+    new DirectoryServiceLocator('../src')
 );
 
 $builder->addLocator(
-    new GlobClassLocator('../src/{Controller,Model}/**/*.php')
+    new GlobServiceLocator('../src/{Controller,Model}/**/*.php')
 );
 
 $container = $builder->build();
@@ -337,7 +337,7 @@ Notice this will probably end up in an own library at some point.
 ```php
 $typeInfoFactory = new PersistentTypeInfoFactory();
 
-$typeInfo = $typeInfoFactory->getTypeInfo('array<int>');
+$typeInfo = $typeInfoFactory->get('array<int>');
 
 $typeInfo->isGeneric() //true
 

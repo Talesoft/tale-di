@@ -25,7 +25,7 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
     /** @var TypeInfoInterface[] */
     private $typeInfos = [];
 
-    public function getTypeInfo(string $name): TypeInfoInterface
+    public function get(string $name): TypeInfoInterface
     {
         //Map NULL to null, Xyz[] to array<Xyz> and \Some\Class to Some\Class
         $normalizedName = $name !== 'NULL'
@@ -49,9 +49,9 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
         }
         if (preg_match('/^(\??\w+)<([^>]+)>$/', $normalizedName, $matches)) {
             $kind = TypeInfoInterface::KIND_GENERIC;
-            $genericType = $this->getTypeInfo($matches[1]);
+            $genericType = $this->get($matches[1]);
             $genericParameterTypes = array_map(function (string $type) {
-                return $this->getTypeInfo($type);
+                return $this->get($type);
             }, explode(',', $matches[2]));
         }
         return $this->typeInfos[$name] = new TypeInfo(

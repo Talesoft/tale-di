@@ -4,5 +4,5 @@ namespace Tale\Di;
 
 interface TypeInfoFactoryInterface
 {
-    public function getTypeInfo(string $name): TypeInfoInterface;
+    public function get(string $name): TypeInfoInterface;
 }

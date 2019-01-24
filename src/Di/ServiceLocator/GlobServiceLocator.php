@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Tale\Di\ClassLocator;
+namespace Tale\Di\ServiceLocator;
 
-use Tale\Di\ClassLocatorInterface;
+use Tale\Di\ServiceLocatorInterface;
 
-final class GlobClassLocator implements ClassLocatorInterface
+final class GlobServiceLocator implements ServiceLocatorInterface
 {
     /** @var string */
     private $includePattern;
@@ -30,7 +30,7 @@ final class GlobClassLocator implements ClassLocatorInterface
             if (\in_array($file, $excludedFiles, true)) {
                 continue;
             }
-            yield from (new FileClassLocator($file))->locate();
+            yield from (new FileServiceLocator($file))->locate();
         }
     }
 }

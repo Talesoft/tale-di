@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Tale\Di\ClassLocator;
+namespace Tale\Di\ServiceLocator;
 
-use Tale\Di\ClassLocatorInterface;
+use Tale\Di\ServiceLocatorInterface;
 
-final class DirectoryClassLocator implements ClassLocatorInterface
+final class DirectoryServiceLocator implements ServiceLocatorInterface
 {
     /** @var string */
     private $directory;
@@ -31,7 +31,7 @@ final class DirectoryClassLocator implements ClassLocatorInterface
                 yield from (new self($fullPath))->locate();
                 continue;
             }
-            yield from (new FileClassLocator($file))->locate();
+            yield from (new FileServiceLocator($file))->locate();
         }
     }
 }

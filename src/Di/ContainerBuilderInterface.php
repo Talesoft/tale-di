@@ -12,6 +12,6 @@ interface ContainerBuilderInterface
     public function setParameters(iterable $parameters, string $className = self::CLASS_NAME_ALL): void;
     public function add(string $className): void;
     public function addInstance($instance): void;
-    public function addLocator(ClassLocatorInterface $locator): void;
+    public function addLocator(ServiceLocatorInterface $locator): void;
     public function build(): ContainerInterface;
 }
