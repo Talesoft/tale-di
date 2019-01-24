@@ -1,255 +1,367 @@
 
-# Tale Di
-**A Tale Framework Component**
+[![Packagist](https://img.shields.io/packagist/v/talesoft/tale-di.svg?style=for-the-badge)](https://packagist.org/packages/talesoft/tale-di)
+[![License](https://img.shields.io/github/license/Talesoft/tale-di.svg?style=for-the-badge)](https://github.com/Talesoft/tale-di/blob/master/LICENSE.md)
+[![CI](https://img.shields.io/travis/Talesoft/tale-di.svg?style=for-the-badge)](https://travis-ci.org/Talesoft/tale-di)
+[![Coverage](https://img.shields.io/codeclimate/coverage/Talesoft/tale-di.svg?style=for-the-badge)](https://codeclimate.com/github/Talesoft/tale-di)
 
-# What is Tale Di?
+Tale DI
+=======
 
-A PSR-11 compatible DI Container. Quick, small and easy to use.
+What is Tale DI?
+------------------
 
-Tale DI can automatically inject constructor arguments and `set*`-style setter values to instances.
-The DI container will manage these dependencies and lazily wire them together.
+Tale DI is a lightweight implementation of the PSR-11
+Dependency Injection spec will full auto-wiring support.
 
-A really strict pattern ist enforced for consistency reasons, ease of use and beauty. If you stick to it, this library can be really handy.
+The API might change several times soon.
 
-# Installation
-
-Install via Composer
+Installation
+------------
 
 ```bash
 composer require talesoft/tale-di
 ```
 
+Usage
+-----
 
-# Basic usage
+### ContainerBuilder
 
-Throw some classes into the container, get fully wired instances out. No keys are used, only class names. No other types than objects can be wired by the DI.
+`use Tale\Di\ContainerBuilder;`
+
+Using the ContainerBuilder, you can auto-wire a fully working
+DI container including full PSR-6 cache support.
+
+The container returned will be a `Tale\Di\Container` which is 
+explained below.
 
 ```php
-use Tale\Di\Container;
+$cachePool = new SomePsr6CachePool();
 
-$container = (new Container)
-    ->registerSelf() //Registers the container itself
-    ->register(MyCache::class)
-    ->register(MyDatabase::class)
-    ->register(MyController::class)
-    ->register(MyForm::class)
-    ->registerInstance($someObject); //Assume it's of class CustomObject
+$builder = new ContainerBuilder($cachePool);
+
+$builder->add(SomeClass::class);
+
+$builder->add(SomeOtherClass::class);
+
+$builder->addInstance(new PDO(...));
+
+$container = $builder->build();
+
+$pdo = $container->get(PDO::class);
+```
+
+### Class Locators
+
+```
+use Tale\Di\ClassLocator\FileClassLocator;
+use Tale\Di\ClassLocator\DirectoryClassLocator;
+use Tale\Di\ClassLocator\GlobClassLocator;
+```
+
+If you don't want to add every single file manually,
+you can also use one of the three Class Locators
+that come with Tale DI.
+
+```php
+$builder->addLocator(
+    new FileClassLocator('src/Classes/MyClass.php')
+);
+
+$builder->addLocator(
+    new DirectoryClassLocator('../src')
+);
+
+$builder->addLocator(
+    new GlobClassLocator('../src/{Controller,Model}/**/*.php')
+);
+
+$container = $builder->build();
+```
+
+### Injections and philosophy
+
+Tale DI, by design, only allows constructor injections. There
+are no optional dependencies that are not covered in a constructor
+and there are no `XyzAware` interfaces and no possibility to do it.
+
+This avoids a lot of magic and defensive null checks all over your
+code. If this is not what you like, Tale DI might not be what 
+you're looking for. I suggest you give it a try anyways.
+
+Injections happen simply by class name or an interface it implements:
+
+```php
+class OrderProvider
+{
+    public function __construct(OrderRepository $repository)
+}
+
+$orderProvider = $container->get(OrderProvider::class);
+```
+
+It doesn't matter if you ever added the dependency to the container,
+it will auto-wire any external (or internal) dependency that has a 
+readable type (and even that can be handled). This is possible
+because Tale DI works solely based on PHPs existing class mechanisms,
+interfaces and reflection.
+
+```php
+interface AInterface
+{
+}
+
+class A implements AInterface
+{
+}
+
+//...
+
+$a = $container->get(AInterface::class);
+//$a is instanceof A
+```
+
+Optional dependencies work as expected and should be defaulted
+to default/null implementations so no defensive null checks are
+required.
+
+```php
+class SomeService
+{
+    /**
+     * @var SomeDependencyInterface
+     */
+    private $dependency;
     
-$container->get(Container::class); //The container
-$container->get(MyCache::class); //MyCache instance
-$container->get(MyController::class); //MyController instance
-$container->get(MyForm::class); //MyForm instance
-$container->get(CustomObject::class); //Same as $someObject
+    public function __construct(SomeDependencyInterface $dependency = null)
+    {
+        $this->dependency = $dependency ?? new DefaultSomeDependency();
+    }
+}
 ```
 
+### Iterables and Arrays of interfaces
 
-# Auto-wiring
-
-Tale DI scans all classes it registers and automatically wires dependencies for it. You can inject dependencies in two ways
-
-### Constructor Injection
-
-Assume `MyDatabase` explicitly requires `MyCache`
+Tale DI has a notion of **Tags** specified through
+plain PHP interfaces. You can inject by using interfaces:
 
 ```php
-
-class MyDatabase
+class TableRenamer
 {
+    public function __construct(DbalInterface $dbal)
+}
+```
 
-    private $cache;
+and through proper type-hinting in the doc-comment you can
+even inject all instances of a specific interface:
+
+```php
+class Importer
+{
+    /**
+     * @param iterable<\App\Service\Importer\WorkerInterface>
+     */
+    public function __construct(iterable $workers);
     
-    public function __construct(MyCache $cache)
-    {
-        
-        $this->cache = $cache;
-    }
-}
-```
-
-Nothing else required. When using
-
-```php
-$container->get(MyDatabase::class);
-```
-
-you'll always receive the same `MyDatabase`-instance and a fixed instance of `MyCache` will be fed to the constructor out of the DI container.
-
-If the dependency doesn't exist, a `NotFoundException` will be thrown (at `register` already), unless you've given it a default value `MyCache $cache = null`.
-
-
-### Setter Injection
-
-Tale DI scans all methods that start with `set`. If they fit the following criteria
-
-- They start with `set`, whatever comes after it doesn't matter
-- They have exactly one argument
-- The single argument has a class typehint
-- The single argument doesn't have a default value/isn't optional
-
-the DI container will try to fill them automatically.
-
-```php
-
-class MyDatabase
-{
-
-    private $cache;
     
-    public function setCache(MyCache $cache)
-    {
-        
-        $this->cache = $cache;
-    }
+    /**
+     * @param array<\App\Service\Importer\WorkerInterface>
+     */
+    public function __construct(array $workers);
 }
 ```
 
-If the dependency was not found in the container, it is ignored (Meaning, all setter injections are optional)
+This will inject all known dependencies of type WorkerInterface
+into the `workers` argument.
 
+### Parameters
 
-# Inheritance
-
-A derived class can be found be getting its base class or interface.
+Tale DI can't only inject classes and instances, you can specify
+fixed parameters that are injected based on their names. Notice
+they should be serializable to make use of the caching mechanisms.
 
 ```php
+$builder->setParameter('someParameter', 'some value');
 
-class JsonCache implements CacheInterface {}
+//Any class with a parameter 'someParameter' will get 'some value' injected as a string
+```
 
-$container
-    ->register(JsonCache::class);
+The second parameter allows you to reduce the parameter
+to be used on a specific class or interface only.
+
+This also allows creating instances of external types
+without requiring a specific factory for it:
+
+```php
+class SomeClass
+{
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo; //Fully working PDO instance!
+    }
+}
+
+
+$builder->setParameters([
+    'dsn' => 'mysql:host=localhost',
+    'username' => 'root', 
+    'passwd' => '', 
+    'options' => [PDO::ATTR_ERRMODE => PDO_ERRMODE_EXCEPTION]
+], PDO::class);
+
+$builder->add(SomeClass::class);
+$container = $builder->build();
+
+$someInstance = $container->get(SomeClass::class);
+```
+
+### Manually construct container
+
+The base setup of the container is pretty simple. Most of the stuff is
+used for the auto-wiring mechanism, but you can also completely avoid
+the `ContainerBuilder` and use containers directly.
+
+Tale DI brings three base containers with it that you can use for their
+specific purposes.
+
+#### Container
+
+`use Tale\Container;`
+
+The Tale Container and the heart of the DI system is a container
+that resolves values through specific `Tale\Di\DependencyInterface`
+instances. This is how it works:
+
+```php
+$dependencies = [
+    //Value Dependency is just a value. Can be any kind of value.
+    'test value' => new ValueDependency('some value'),
     
-$container->get(CacheInterface::class); //JsonCache instance
-```
-
-This makes it possible to easily provide other implementations for services already stored early in the container.
-
-If you have both, a `Cache`-instance and a `JsonCache`-instance where `JsonCache` derived from `Cache`, you either wanted it (e.g. overwriting an existing service)
-or you probably have a structural error (e.g. better use interfaces)
-
-
-# Passing configuration to classes
-
-In symfony DI you can easily inject option arrays into classes (`%options_array%`). This is not possible in Tale DI.
-
-Configuration values with Tale DI are supposed to be full classes (e.g. `AppConfig`, `DatabaseConfig`, `CacheConfig`)
-
-
-# Caching
-
-Caching in Tale DI is pretty straight-forward. The whole container is serializable and will only store structural information, but not object instances.
-On deserialization, no register, analyze or wire is needed anymore, just receiving instances directly.
-
-
-```php
-
-$app = (new Container)
-    ->register(A::class)
-    ->register(B::class)
-    ->register(C::class)
-    ->register(D::class)
-
-//Serialize, e.g. into cache
-file_put_contents(__DIR__.'/container', serialize($app));
-
-
-//At later use/page call, get container from cache
-$app = unserialize(file_get_contents(__DIR__.'/container'));
-
-$app->get(C::class); //C-instance, fully wired
-```
-
-
-# Persistence
-
-Dependencies can be registered unpersistent which will lead to have a new instance created whenever you call `get` on the class name. To make a class unpersistent, use the second parameter of `register`.
-This can act as some kind of factory inside the container.
-
-```php
-
-$app = (new Container)
-    ->register(UpdateEvent::class, false);
+    //A reference dependency references another value in the container
+    'reference' => new ReferenceDependency('test value'),
     
-$app->get(UpdateEvent::class); //UpdateEvent instance(1)
-$app->get(UpdateEvent::class); //UpdateEvent instance(2)
-$app->get(UpdateEvent::class); //UpdateEvent instance(3)
+    //A callback dependency only gets resolved when it's requested
+    'factory' => new CallbackDependency(function (ContainerInterface $container) {
+        return new Something($container->get(SomethingElse::class));
+    }),
+    
+    //Same as CallbackDependency, but will cache the result between each ->get() call
+    'lazy factory' => new LazyCallbackDependency(function () {
+        return (new SomeHeavyWorker())->getResult();
+    })
+];
+
+$container = new Container($dependencies);
+
+$container->get('test value'); //"some value"
+$container->get('reference'); //"some value"
+//etc.
 ```
 
-When registering existing object instances (through `registerInstance` or `registerSelf`), they are always persistent.
-
-
-# Usage Example
+You can always define own dependency types and how they are resolved
+by implementing `Tale\Di\DependencyInterface`:
 
 ```php
-use Tale\Di\ContainerInterface;
-use Tale\Di\ContainerTrait;
-
-//Use in any class as a drop-in
-class App extends SomeBaseAppImNotAllowedToTouch implements ContainerInterface
+final class PdoDependency implements DependencyInterface
 {
-    use ContainerTrait;
-}
-
-//Could also be:
-//use Tale\Di\Container;
-//class App extends Container {}
-
-class Config {}
-
-class Service
-{
-
-    private $config;
-
-    public function __construct(Config $config)
+    private $myPdoInstance;
+    
+    //...
+    
+    public function get(ContainerInterface $container)
     {
-
-        $this->config = $config;
-    }
-
-    public function getConfig()
-    {
-        return $this->config;
+        return $this->myPdoInstance;
     }
 }
 
-class Cache extends Service
+$container = new Container(['pdo' => new PdoDependency()]);
+```
+
+#### ArrayContainer
+
+`use Tale\Di\Container\ArrayContainer;`
+
+Mostly useful for testing, this is a really basic implementation
+of PSR-11 that just maps fixed names to values
+
+```php
+$container = new ArrayContainer([
+    SomeClass::class => new SomeClass(),
+    'test key' => 15
+]);
+
+$container->get(SomeClass::class); //SomeClass instance
+$container->get('test key'); //15
+```
+
+#### NullContainer
+
+`use Tale\Di\Container\NullContainer;`
+
+A Null Container that always returns false when calling `->has()` and
+always throws a `NotFoundException` when calling `->get()`.
+
+This is mostly useful as a default container for classes that want
+to decorate containers as an optional dependency and require a 
+default implementation to avoid defensive null checks.
+
+```php
+final class MyAdapterFactory
 {
-}
-
-class Renderer extends Service
-{
-
-    private $cache;
-
-    public function setCache(Cache $cache)
+    public function __construct(ContainerInterface $container = null)
     {
-
-        $this->cache = $cache;
-        return $this;
+        $this->container = $container ?? new NullContainer();
     }
-
-    public function getCache()
+    
+    public function createAdapter(): AdapterInterface
     {
-        return $this->cache;
-    }
-
-    public function render()
-    {
-
-        return get_class($this);
+        $adapter = null;
+        if ($this->container->has(SomeAdapter::class)) {
+            $adapter = $this->container->get(SomeAdapter::class);
+        } else if ($this->container->has(SomeOtherAdapter::class)) {
+            $adapter = $this->container->get(SomeOtherAdapter::class);
+        } else {
+            $adapter = new SomeDefaultAdapter();
+        }
+        return $adapter;
     }
 }
+```
 
-class AwesomeRenderer extends Renderer
-{
-}
+### Type Information
+
+`use Tale\Di\TypeInfoFactory\PersistentTypeInfoFactory;`
+
+Notice this will probably end up in an own library at some point.
+
+```php
+$typeInfoFactory = new PersistentTypeInfoFactory();
+
+$typeInfo = $typeInfoFactory->getTypeInfo('array<int>');
+
+$typeInfo->isGeneric() //true
+
+$typeInfo->getGenericType()->getName() //array
+
+$typeInfo->getGenericTypeParameters()[0]->getName() //int
+```
 
 
-$app = (new App)
-    ->register(Config::class);
-    ->register(Cache::class);
-    ->register(AwesomeRenderer::class);
+### Parameter Reader
 
-$app->get(Renderer::class)->render(); //"AwesomeRenderer"
-$app->get(Renderer::class)->getConfig(); //Config instance
-$app->get(Renderer::class)->getCache(); //Cache instance
+`use Tale\Di\ParameterReader\DocCommentParameterReader;`
+
+A parameter reader that also takes into account
+doc comment `@param`-annotations
+
+```php
+$typeInfoFactory = new PersistentTypeInfoFactory();
+
+$paramReader = new DocCommentParameterReader($typeInfoFactory);
+
+$reflClass = new ReflectionClass(SomeClass::class);
+
+$params = $paramReader->read($reflClass->getMethod('__construct');
+
+var_dump($params);
 ```

@@ -1,27 +1,32 @@
 {
     "name": "talesoft/tale-di",
     "type": "library",
-    "keywords": ["dependency-injection", "dependencies", "di"],
-    "description": "Basic dependency injection container with auto-wiring mechanism",
+    "keywords": ["di", "container", "psr-11"],
+    "description": "A PSR-15 compatible HTTP utility library",
     "license": "MIT",
-    "homepage": "http://docs.talesoft.io/tale-framework/tale/di",
+    "homepage": "http://docs.talesoft.codes/php/tale/di",
     "authors": [
         {
             "name": "Torben Koehn",
-            "email": "tk@talesoft.io"
+            "email": "torben@talesoft.codes"
         }
     ],
-    "minimum-stability": "dev",
     "require": {
-        "php": ">=7.0.8",
-        "psr/container": "^1.0@dev"
+        "php": ">=7.1.0",
+        "psr/cache": "^1.0",
+        "psr/container": "^1.0",
+        "talesoft/tale-cache-core": "^0.1.0"
     },
     "autoload": {
         "psr-4": {
-            "Tale\\": ""
+            "Tale\\": "src",
+            "Tale\\Test\\": "tests"
         }
     },
     "provides": {
-        "psr/container-implementation": "^1.0.0"
+        "psr/container-implementation": "~1.0"
+    },
+    "require-dev": {
+        "talesoft/tale-dev-tool": "dev-master"
     }
 }
