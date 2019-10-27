@@ -198,15 +198,22 @@ final class ContainerBuilder implements ContainerBuilderInterface
                     $typeInfo = $param->getTypeInfo();
 
                     if ($typeInfo->isBuiltIn() && !$param->isOptional()) {
-                        throw new RuntimeException(
-                            "Failed to write param {$param->getName()} of {$className}: No value found"
-                        );
+                        throw new RuntimeException(sprintf(
+                            'Failed to wire constructor parameter $%s of class %s: No value found. '.
+                            'You should probably call ContainerBuilder::setParameter(\'%s\', $value, \'%s\') before '.
+                            'calling build to specify the parameter.',
+                            $param->getName(),
+                            $className,
+                            $param->getName(),
+                            $className
+                        ));
                     }
 
                     if ($typeInfo->isClassName()
                         && $param->isOptional()
                         && !$typeInfo->isNullable()
                         && $param->getDefaultValue() === null) {
+                        // Let PHP errors handle it if they are not there/defined
                         continue;
                     }
 
@@ -313,14 +320,14 @@ final class ContainerBuilder implements ContainerBuilderInterface
             // Yield our newly created service definition
             yield $className => $service;
 
-            // Walk through all constructor parameters and check for classes/services we may no know yet
+            // Walk through all constructor parameters and check for classes/services we may not know yet
             // All parameter types you didn't add will be added now
             // If we requested services that come later in our class name array, the definition will be
             // prioritized and already added to finishedDefinitions before it will be iterated again later
             foreach ($service->getParameters() as $param) {
                 $paramType = $param->getTypeInfo();
-                $paramTypeName = $paramType->getName();
-                if ($paramType->isClassName() && !in_array($paramTypeName, $finishedDefinitions, true)) {
+                foreach ($this->getClassNameTypes($paramType) as $classParamType) {
+                    $paramTypeName = $classParamType->getName();
                     // Build a service definition from our parameter type
                     $childService = $this->buildService($paramTypeName);
                     if (!$childService) {
@@ -402,6 +409,28 @@ final class ContainerBuilder implements ContainerBuilderInterface
     {
         foreach ($this->serviceLocators as $classLocator) {
             yield from $classLocator->locate();
+        }
+    }
+
+    /**
+     * Returns all class names that are used in a type.
+     *
+     * @param TypeInfoInterface $typeInfo The type info to retrieve class names from.
+     * @return Generator A generator of class names.
+     */
+    private function getClassNameTypes(TypeInfoInterface $typeInfo): Generator
+    {
+        if ($typeInfo->isClassName()) {
+            yield $typeInfo;
+            return;
+        }
+        if ($typeInfo->isGeneric()) {
+            foreach ($typeInfo->getGenericParameterTypes() as $genericParamType) {
+                foreach ($this->getClassNameTypes($genericParamType) as $paramTypeInfo) {
+                    yield $paramTypeInfo;
+                }
+            }
+            return;
         }
     }
 }

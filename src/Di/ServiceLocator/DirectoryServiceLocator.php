@@ -39,10 +39,20 @@ final class DirectoryServiceLocator implements ServiceLocatorInterface
 
             $fullPath = "{$this->directory}/{$file}";
             if (is_dir($fullPath)) {
-                yield from (new self($fullPath))->locate();
+                // We iterate instead of using yield from because yield from resets keys
+                // and will break iterator_to_array when not using use_keys on it
+                $dirClassNames = (new self($fullPath))->locate();
+                foreach ($dirClassNames as $dirClassName) {
+                    yield $dirClassName;
+                }
                 continue;
             }
-            yield from (new FileServiceLocator($file))->locate();
+            // We iterate instead of using yield from because yield from resets keys
+            // and will break iterator_to_array when not using use_keys on it
+            $fileClassNames = (new FileServiceLocator($fullPath))->locate();
+            foreach ($fileClassNames as $fileClassName) {
+                yield $fileClassName;
+            }
         }
     }
 }

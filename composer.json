@@ -27,10 +27,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Tale\\": "src",
-            "Tale\\Test\\": "tests"
+            "Tale\\": "src"
         },
         "functions": ["src/functions.php"]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tale\\Test\\": "tests"
+        }
     },
     "provide": {
         "psr/container-implementation": "~1.0"

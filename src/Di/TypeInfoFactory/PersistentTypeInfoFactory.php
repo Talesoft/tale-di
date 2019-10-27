@@ -49,6 +49,9 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
             ? preg_replace('/^([^\[]+)\[\]$/', 'array<$1>', ltrim(trim($name), '\\'))
             : 'null';
 
+        // Turn array<\SomeClass> into array<SomeClass> and array<string, \SomeClass> into array<string, SomeClass>
+        $normalizedName = preg_replace('/([<,]\s*)\\\\/', '$1', $normalizedName);
+
         if (isset($this->typeInfos[$normalizedName])) {
             return $this->typeInfos[$normalizedName];
         }

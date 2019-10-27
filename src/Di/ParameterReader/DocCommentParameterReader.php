@@ -77,13 +77,13 @@ final class DocCommentParameterReader implements ParameterReaderInterface
         foreach ($reflParams as $param) {
             $name = $param->getName();
             $reflType = $param->getType();
-            $type = $reflType ? $this->typeInfoFactory->getTypeInfo($reflType->getName()) : null;
+            $type = $reflType ? $this->typeInfoFactory->get($reflType->getName()) : null;
             $docBlockType = $docBlockParams[$name] ?? null;
-            $type = $docBlockType ?? $type;
-            if (!$type) {
+            $finalType = $docBlockType ?? $type;
+            if (!$finalType) {
                 // $className = $method->getDeclaringClass()->getName();
                 // throw new \RuntimeException("Failed to determine a type for parameter {$name} of {$className}");
-                $type = $this->typeInfoFactory->getTypeInfo('any');
+                $finalType = $this->typeInfoFactory->get('any');
             }
             $defaultValue = null;
             if ($param->isOptional()) {
@@ -93,7 +93,7 @@ final class DocCommentParameterReader implements ParameterReaderInterface
                 }
             }
 
-            yield $name => new Parameter($name, $type, $param->isOptional(), $defaultValue);
+            yield $name => new Parameter($name, $finalType, $param->isOptional(), $defaultValue);
         }
         return $params;
     }
@@ -110,15 +110,17 @@ final class DocCommentParameterReader implements ParameterReaderInterface
         if (!is_string($docBlock)) {
             return;
         }
-        if (!preg_match_all('/@param\s+(\S+)\$(\S+)/', $docBlock, $matches)) {
+        if (!preg_match_all('/@param\s+(\S+)\s+\$(\w+)/', $docBlock, $matches)) {
             return;
         }
 
-        foreach ($matches as $match) {
-            [, $types, $name] = $match;
+        $len = count($matches[0]);
+        for($i = 0; $i < $len; $i++) {
+            $types = $matches[1][$i];
+            $name = $matches[2][$i];
             /** @var TypeInfo[] $types */
             $types = array_map(function ($type) {
-                return $this->typeInfoFactory->getTypeInfo($type);
+                return $this->typeInfoFactory->get($type);
             }, array_values(array_filter(array_map('trim', explode('|', $types)))));
 
             $typeCount = count($types);
@@ -131,7 +133,7 @@ final class DocCommentParameterReader implements ParameterReaderInterface
                 continue;
             }
 
-            //Determine which type makes the most sense to keep
+            // Determine which type makes the most sense to keep
             $builtInType = null;
             $genericType = null;
             $classNameType = null;
@@ -152,7 +154,7 @@ final class DocCommentParameterReader implements ParameterReaderInterface
                 && $builtInType->getName() === 'null') {
                 /** @var TypeInfoInterface $type */
                 $type = $genericType ?? $classNameType;
-                yield $name => $this->typeInfoFactory->getTypeInfo("?{$type->getName()}");
+                yield $name => $this->typeInfoFactory->get("?{$type->getName()}");
                 continue;
             }
 
