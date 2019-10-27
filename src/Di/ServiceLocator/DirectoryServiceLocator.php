@@ -4,20 +4,31 @@ namespace Tale\Di\ServiceLocator;
 
 use Tale\Di\ServiceLocatorInterface;
 
+/**
+ * The DirectoryServiceLocator will recursively load a whole directory of class names available.
+ *
+ * @package Tale\Di\ServiceLocator
+ */
 final class DirectoryServiceLocator implements ServiceLocatorInterface
 {
-    /** @var string */
+    /**
+     * @var string The directory to find class names in.
+     */
     private $directory;
 
     /**
-     * FileServiceLocator constructor.
-     * @param string $directory
+     * Creates a new DirectoryServiceLocator.
+     *
+     * @param string $directory The directory to locate classes in.
      */
     public function __construct(string $directory)
     {
         $this->directory = $directory;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function locate(): iterable
     {
         $files = scandir($this->directory, SCANDIR_SORT_NONE);

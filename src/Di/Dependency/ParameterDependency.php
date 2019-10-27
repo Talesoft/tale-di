@@ -6,9 +6,19 @@ use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Tale\Di\DependencyInterface;
 
+/**
+ * A ParameterDependency can be configured to be optional and contain a default value.
+ *
+ * If the service id given can not be resolved, it will resolve to a default value
+ * given, if it is optional, or throw an error, if it is not.
+ *
+ * @package Tale\Di\Dependency
+ */
 final class ParameterDependency implements DependencyInterface
 {
-
+    /**
+     * @var string The Service ID to load.
+     */
     private $id;
     private $loaded = false;
     private $value;

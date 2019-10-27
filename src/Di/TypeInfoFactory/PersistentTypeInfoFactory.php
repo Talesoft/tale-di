@@ -6,8 +6,20 @@ use Tale\Di\TypeInfo;
 use Tale\Di\TypeInfoInterface;
 use Tale\Di\TypeInfoFactoryInterface;
 
+/**
+ * The PersistentTypeInfoFactory will parse fully-qualified type names to type information.
+ *
+ * Once it parsed a type by name, it will always return the same information instance (runtime caching).
+ *
+ * @package Tale\Di\TypeInfoFactory
+ */
 final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
 {
+    /**
+     * The type names that are seen as "built in".
+     *
+     * Notice that 'any' is seen as "built_in", makes it easier to resolve.
+     */
     public const BUILT_IN_NAMES = [
         TypeInfoInterface::NAME_ANY,
         'null',
@@ -22,12 +34,17 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
         'iterable'
     ];
 
-    /** @var TypeInfoInterface[] */
+    /**
+     * @var TypeInfoInterface[] The cached type infos.
+     */
     private $typeInfos = [];
 
+    /**
+     * {@inheritDoc}
+     */
     public function get(string $name): TypeInfoInterface
     {
-        //Map NULL to null, Xyz[] to array<Xyz> and \Some\Class to Some\Class
+        // Map NULL to null, Xyz[] to array<Xyz> and \Some\Class to Some\Class
         $normalizedName = $name !== 'NULL'
             ? preg_replace('/^([^\[]+)\[\]$/', 'array<$1>', ltrim(trim($name), '\\'))
             : 'null';

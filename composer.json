@@ -1,13 +1,21 @@
 {
     "name": "talesoft/tale-di",
     "type": "library",
-    "keywords": ["di", "container", "psr-11"],
-    "description": "A PSR-15 compatible HTTP utility library",
+    "keywords": [
+        "di",
+        "container",
+        "container-builder",
+        "dependency-injection",
+        "dependencies",
+        "services",
+        "psr-11"
+    ],
+    "description": "A PSR-11 compatible dependency injection library",
     "license": "MIT",
     "homepage": "http://docs.talesoft.codes/php/tale/di",
     "authors": [
         {
-            "name": "Torben Koehn",
+            "name": "Torben Köhn",
             "email": "torben@talesoft.codes"
         }
     ],
@@ -24,7 +32,7 @@
         },
         "functions": ["src/functions.php"]
     },
-    "provides": {
+    "provide": {
         "psr/container-implementation": "~1.0"
     },
     "require-dev": {

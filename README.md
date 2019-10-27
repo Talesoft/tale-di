@@ -13,13 +13,13 @@ What is Tale DI?
 Tale DI is a lightweight implementation of the PSR-11
 Dependency Injection spec will full auto-wiring support.
 
-The API might change several times soon.
+The API might still change here and there.
 
 Installation
 ------------
 
 ```bash
-composer require talesoft/tale-di
+composer req talesoft/tale-di
 ```
 
 Usage
@@ -36,13 +36,13 @@ The container returned will be a `Tale\Di\Container` which is
 explained below.
 
 ```php
-$cachePool = new SomePsr6CachePool();
+$cachePool = new RedisCachePool();
 
 $builder = new ContainerBuilder($cachePool);
 
-$builder->add(SomeClass::class);
+$builder->add(ViewRenderer::class);
 
-$builder->add(SomeOtherClass::class);
+$builder->add(ControllerDispatcher::class);
 
 $builder->addInstance(new PDO(...));
 
@@ -107,18 +107,18 @@ because Tale DI works solely based on PHPs existing class mechanisms,
 interfaces and reflection.
 
 ```php
-interface AInterface
+interface ViewRendererInterface
 {
 }
 
-class A implements AInterface
+class ViewRenderer implements ViewRendererInterface
 {
 }
 
 //...
 
-$a = $container->get(AInterface::class);
-//$a is instanceof A
+$renderer = $container->get(ViewRendererInterface::class);
+// $renderer is instanceof ViewRenderer
 ```
 
 Optional dependencies work as expected and should be defaulted
@@ -126,16 +126,16 @@ to default/null implementations so no defensive null checks are
 required.
 
 ```php
-class SomeService
+class AvatarGenerator
 {
     /**
-     * @var SomeDependencyInterface
+     * @var CacheInterface
      */
-    private $dependency;
+    private $cache;
     
-    public function __construct(SomeDependencyInterface $dependency = null)
+    public function __construct(CacheInterface $cache = null)
     {
-        $this->dependency = $dependency ?? new DefaultSomeDependency();
+        $this->cache = $cache ?? new RuntimeCache();
     }
 }
 ```
@@ -146,7 +146,7 @@ Tale DI has a notion of **Tags** specified through
 plain PHP interfaces. You can inject by using interfaces:
 
 ```php
-class TableRenamer
+class EntityManager
 {
     public function __construct(DbalInterface $dbal)
 }
@@ -161,13 +161,20 @@ class Importer
     /**
      * @param iterable<\App\Service\Importer\WorkerInterface>
      */
-    public function __construct(iterable $workers);
-    
+    public function __construct(iterable $workers)
+    {
+        foreach ($workers as $worker) {
+            $this->initializeWorker($worker);
+        }
+    }
     
     /**
      * @param array<\App\Service\Importer\WorkerInterface>
      */
-    public function __construct(array $workers);
+    public function __construct(array $workers)
+    {
+        $this->workers = array_filter($workers, fn($worker) => $worker->canImport());
+    }
 }
 ```
 
@@ -193,26 +200,27 @@ This also allows creating instances of external types
 without requiring a specific factory for it:
 
 ```php
-class SomeClass
+class UserManager
 {
     public function __construct(PDO $pdo)
     {
-        $this->pdo = $pdo; //Fully working PDO instance!
+        $this->pdo = $pdo; // Fully working PDO instance!
     }
 }
 
-
 $builder->setParameters([
+    // These are the parameter names PDO internally uses in its constructor!
     'dsn' => 'mysql:host=localhost',
     'username' => 'root', 
     'passwd' => '', 
     'options' => [PDO::ATTR_ERRMODE => PDO_ERRMODE_EXCEPTION]
 ], PDO::class);
 
-$builder->add(SomeClass::class);
+$builder->add(UserManager::class);
 $container = $builder->build();
 
-$someInstance = $container->get(SomeClass::class);
+$userManager = $container->get(UserManager::class);
+// PDO will be fully wired in UserManager
 ```
 
 ### Manually construct container
@@ -255,7 +263,7 @@ $container = new Container($dependencies);
 
 $container->get('test value'); //"some value"
 $container->get('reference'); //"some value"
-//etc.
+// etc.
 ```
 
 You can always define own dependency types and how they are resolved
@@ -264,17 +272,23 @@ by implementing `Tale\Di\DependencyInterface`:
 ```php
 final class PdoDependency implements DependencyInterface
 {
-    private $myPdoInstance;
+    private $pdo;
     
-    //...
+    public function __construct()
+    {
+        $this->pdo = new PDO(...);
+    }
     
     public function get(ContainerInterface $container)
     {
-        return $this->myPdoInstance;
+        return $this->pdo;
     }
 }
 
 $container = new Container(['pdo' => new PdoDependency()]);
+$pdo = $container->get('pdo');
+
+$stmt = $pdo->prepare(...);
 ```
 
 #### ArrayContainer
@@ -306,7 +320,7 @@ to decorate containers as an optional dependency and require a
 default implementation to avoid defensive null checks.
 
 ```php
-final class MyAdapterFactory
+final class AdapterFactory
 {
     public function __construct(ContainerInterface $container = null)
     {

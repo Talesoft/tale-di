@@ -4,24 +4,39 @@ namespace Tale\Di\ServiceLocator;
 
 use Tale\Di\ServiceLocatorInterface;
 
+/**
+ * GlobServiceLocator takes a glob pattern and returns all classes in can find in all files that match it.
+ *
+ * You can optionally also pass an exclude pattern that contains files that are ignored.
+ *
+ * @package Tale\Di\ServiceLocator
+ */
 final class GlobServiceLocator implements ServiceLocatorInterface
 {
-    /** @var string */
+    /**
+     * @var string The glob pattern of files to locate class names in.
+     */
     private $includePattern;
 
-    /** @var string|null */
+    /**
+     * @var string|null The glob pattern of excluded files that we shall ignore.
+     */
     private $excludePattern;
 
     /**
-     * FileServiceLocator constructor.
-     * @param string $pattern
-     * @param string|null $excludePattern
+     * Creates a new GlobServiceLocator.
+     *
+     * @param string $pattern A glob pattern that we're locating class names in.
+     * @param string|null $excludePattern A pattern of files to exclude or null to exclude nothing.
      */
     public function __construct(string $pattern, ?string $excludePattern = null)
     {
         $this->includePattern = $pattern;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function locate(): iterable
     {
         $files = glob($this->includePattern, GLOB_BRACE);

@@ -4,20 +4,33 @@ namespace Tale\Di\ServiceLocator;
 
 use Tale\Di\ServiceLocatorInterface;
 
+/**
+ * The FileServiceLocator locates a class in a file.
+ *
+ * It will use PHP tokenization to get the actual namespace and fully-qualified class name out of the file.
+ *
+ * @package Tale\Di\ServiceLocator
+ */
 final class FileServiceLocator implements ServiceLocatorInterface
 {
-    /** @var string */
+    /**
+     * @var string The file path we're locating classes in.
+     */
     private $path;
 
     /**
-     * FileServiceLocator constructor.
-     * @param string $path
+     * Creates a new FileServiceLocator.
+     *
+     * @param string $path The file path to locate classes in.
      */
     public function __construct(string $path)
     {
         $this->path = $path;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function locate(): iterable
     {
         $className = $this->readClassName();
@@ -26,6 +39,13 @@ final class FileServiceLocator implements ServiceLocatorInterface
         }
     }
 
+    /**
+     * Tokenizes the file and reads token by token.
+     *
+     * It saves the current namespace it is in and finds the _main_ class defined in the file.
+     *
+     * @return string|null The class name we found or null, if we didn't find a class name
+     */
     private function readClassName(): ?string
     {
         $stream = fopen($this->path, 'rb');

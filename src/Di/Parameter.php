@@ -2,26 +2,44 @@
 
 namespace Tale\Di;
 
+/**
+ * A parameter describes basic parameter information of a function.
+ *
+ * This is mostly a DTO to store the information of classes constructor parameters.
+ *
+ * @package Tale\Di
+ */
 final class Parameter implements \Serializable
 {
-    /** @var string */
+    /**
+     * @var string The name of the parameter without the dollar sign ($).
+     */
     private $name;
 
-    /** @var TypeInfoInterface */
+    /**
+     * @see TypeInfoFactoryInterface
+     *
+     * @var TypeInfoInterface The type information of the parameter.
+     */
     private $typeInfo;
 
-    /** @var bool */
+    /**
+     * @var bool Whether this parameter is optional or not.
+     */
     private $optional;
 
-    /** @var mixed */
+    /**
+     * @var mixed The default value of the parameter.
+     */
     private $defaultValue;
 
     /**
-     * Parameter constructor.
-     * @param string $name
-     * @param TypeInfoInterface $typeInfo
-     * @param bool $optional
-     * @param mixed $defaultValue
+     * Creates a new Parameter instance.
+     *
+     * @param string $name The name of the parameter without the dollar sign. ($)
+     * @param TypeInfoInterface $typeInfo The type information of the parameter.
+     * @param bool $optional Whether this parameter is optional or not.
+     * @param mixed $defaultValue The default value of the parameter
      */
     public function __construct(string $name, TypeInfoInterface $typeInfo, bool $optional, $defaultValue)
     {
@@ -32,6 +50,8 @@ final class Parameter implements \Serializable
     }
 
     /**
+     * Returns the name of the parameter without the dollar sign ($).
+     *
      * @return string
      */
     public function getName(): string
@@ -40,7 +60,9 @@ final class Parameter implements \Serializable
     }
 
     /**
-     * @param string $name
+     * Sets the name of the parameter.
+     *
+     * @param string $name The new name of the parameter without the dollar sign ($).
      */
     public function setName(string $name): void
     {
@@ -48,6 +70,8 @@ final class Parameter implements \Serializable
     }
 
     /**
+     * Returns the type information of this parameter.
+     *
      * @return TypeInfoInterface
      */
     public function getTypeInfo(): TypeInfoInterface
@@ -56,6 +80,8 @@ final class Parameter implements \Serializable
     }
 
     /**
+     * Returns whether this parameter is optional or not.
+     *
      * @return bool
      */
     public function isOptional(): bool
@@ -64,6 +90,8 @@ final class Parameter implements \Serializable
     }
 
     /**
+     * Returns the default value of the parameter.
+     *
      * @return mixed
      */
     public function getDefaultValue()
@@ -71,6 +99,11 @@ final class Parameter implements \Serializable
         return $this->defaultValue;
     }
 
+    /**
+     * Serializes the parameter with the PHP serialization mechanism.
+     *
+     * @return string The serialized string.
+     */
     public function serialize(): string
     {
         return serialize([
@@ -81,6 +114,11 @@ final class Parameter implements \Serializable
         ]);
     }
 
+    /**
+     * Unserializes the parameter info from a PHP serialization string.
+     *
+     * @param string $serialized The serialized parameter data.
+     */
     public function unserialize($serialized): void
     {
         [
@@ -88,6 +126,8 @@ final class Parameter implements \Serializable
             $this->typeInfo,
             $this->optional,
             $this->defaultValue
-        ] = unserialize($serialized, ['allowed_classes' => false]);
+        ] = unserialize($serialized, ['allowed_classes' => [
+            \Serializable::class
+        ]]);
     }
 }
