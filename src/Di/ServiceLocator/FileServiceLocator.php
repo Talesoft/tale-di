@@ -53,25 +53,11 @@ final class FileServiceLocator implements ServiceLocatorInterface
         $className = null;
         $buffer = '';
         $bufferSize = 512;
-        $tries = 0;
-        $maxTries = 4;
         while (!feof($stream)) {
             $buffer .= fread($stream, $bufferSize);
-            $tokens = @token_get_all($buffer);
-            $error = error_get_last();
-            if ($error) {
-                // An error occurred, maybe because of a buffer size that is too low.
-                // We try it again three times, with a doubled buffer size each, if it fails, the file is too big maybe.
-                if ($tries >= $maxTries) {
-                    trigger_error(sprintf('%s in %s', $error['message'], $this->path), $error['type']);
-                    return null;
-                }
-                $bufferSize *= 2;
-                $tries++;
-                continue;
-            }
+            // Fix per https://github.com/octobercms/october/issues/2770
+            $tokens = token_get_all('/**/' . $buffer . '/**/');
             $count = \count($tokens);
-
             for ($i = 0; $i < $count; $i++) {
                 [$token] = $tokens[$i];
                 if ($token === T_NAMESPACE && $namespaceName === null) {
