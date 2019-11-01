@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di\ParameterReader;
 
@@ -65,7 +67,7 @@ final class DocCommentParameterReader implements ParameterReaderInterface
      * *\/
      * ```
      * @param \ReflectionMethod $method
-     * @return iterable
+     * @return iterable<\Tale\Di\Parameter>
      */
     public function read(\ReflectionMethod $method): iterable
     {
@@ -81,9 +83,7 @@ final class DocCommentParameterReader implements ParameterReaderInterface
             $docBlockType = $docBlockParams[$name] ?? null;
             $finalType = $docBlockType ?? $type;
             if (!$finalType) {
-                // $className = $method->getDeclaringClass()->getName();
-                // throw new \RuntimeException("Failed to determine a type for parameter {$name} of {$className}");
-                $finalType = $this->typeInfoFactory->get('any');
+                $finalType = $this->typeInfoFactory->get(TypeInfoInterface::NAME_ANY);
             }
             $defaultValue = null;
             if ($param->isOptional()) {
@@ -115,14 +115,18 @@ final class DocCommentParameterReader implements ParameterReaderInterface
         }
 
         $len = count($matches[0]);
-        for($i = 0; $i < $len; $i++) {
+        for ($i = 0; $i < $len; $i++
+        ) {
             $types = $matches[1][$i];
             $name = $matches[2][$i];
             /** @var TypeInfo[] $types */
-            $types = array_map(function ($type) {
-                return $this->typeInfoFactory->get($type);
-            }, array_values(array_filter(array_map('trim', explode('|', $types)))));
+            $types = array_map(
+                function ($type) {
 
+                    return $this->typeInfoFactory->get($type);
+                },
+                array_values(array_filter(array_map('trim', explode('|', $types))))
+            );
             $typeCount = count($types);
             if ($typeCount === 0) {
                 continue;
@@ -151,7 +155,8 @@ final class DocCommentParameterReader implements ParameterReaderInterface
 
             if (($genericType !== null || $classNameType !== null)
                 && $builtInType !== null
-                && $builtInType->getName() === 'null') {
+                && $builtInType->getName() === 'null'
+            ) {
                 /** @var TypeInfoInterface $type */
                 $type = $genericType ?? $classNameType;
                 yield $name => $this->typeInfoFactory->get("?{$type->getName()}");

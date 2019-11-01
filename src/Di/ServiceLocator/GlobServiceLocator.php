@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di\ServiceLocator;
 
@@ -17,7 +19,6 @@ final class GlobServiceLocator implements ServiceLocatorInterface
      * @var string The glob pattern of files to locate class names in.
      */
     private $includePattern;
-
     /**
      * @var string|null The glob pattern of excluded files that we shall ignore.
      */
@@ -32,6 +33,7 @@ final class GlobServiceLocator implements ServiceLocatorInterface
     public function __construct(string $pattern, ?string $excludePattern = null)
     {
         $this->includePattern = $pattern;
+        $this->excludePattern = $excludePattern;
     }
 
     /**
@@ -45,7 +47,12 @@ final class GlobServiceLocator implements ServiceLocatorInterface
             if (\in_array($file, $excludedFiles, true)) {
                 continue;
             }
-            yield from (new FileServiceLocator($file))->locate();
+            // We iterate instead of using yield from because yield from resets keys
+            // and will break iterator_to_array when not using use_keys on it
+            $fileLocator = new FileServiceLocator($file);
+            foreach ($fileLocator->locate() as $className) {
+                yield $className;
+            }
         }
     }
 }

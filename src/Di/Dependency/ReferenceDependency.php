@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di\Dependency;
 
@@ -19,12 +21,10 @@ final class ReferenceDependency implements DependencyInterface, \Serializable
      * @var string The name of the service to reference.
      */
     private $id;
-
     /**
      * @var bool Whether this value is resolved or not.
      */
     private $resolved = false;
-
     /**
      * @var mixed The resolved value, if it was resolved already.
      */

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di;
 
@@ -13,12 +15,10 @@ final class Service implements \Serializable
      * @var string The class name of the service.
      */
     private $className;
-
     /**
      * @var Parameter[] The constructor parameters of the service.
      */
     private $parameters;
-
     /**
      * @var string[] The tags (speak: interfaces) of a service.
      */
@@ -85,8 +85,13 @@ final class Service implements \Serializable
      */
     public function unserialize($serialized): void
     {
-        [$this->className, $this->tags, $this->parameters] = unserialize($serialized, ['allowed_classes' => [
-            \Serializable::class
-        ]]);
+        [$this->className, $this->tags, $this->parameters] = unserialize(
+            $serialized,
+            [
+                'allowed_classes' => [
+                    \Serializable::class
+                ]
+            ]
+        );
     }
 }

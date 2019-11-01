@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di;
 
@@ -15,24 +17,20 @@ final class TypeInfo implements TypeInfoInterface, \Serializable
      * @var string The full name of this type.
      */
     private $name;
-
     /**
      * @see TypeInfoInterface
      *
      * @var string One of the TypeInfoInterface constants to represent what kind of type this is.
      */
     private $kind;
-
     /**
      * @var bool Whether this type is nullable or not.
      */
     private $nullable;
-
     /**
      * @var TypeInfoInterface|null If this is a generic type, it contains the base type.
      */
     private $genericType;
-
     /**
      * @var array The array of the generic type parameters passed.
      */
@@ -53,8 +51,7 @@ final class TypeInfo implements TypeInfoInterface, \Serializable
         bool $nullable = false,
         ?TypeInfoInterface $genericType = null,
         array $genericParameterTypes = []
-    )
-    {
+    ) {
         $this->name = $name;
         $this->kind = $kind;
         $this->nullable = $nullable;

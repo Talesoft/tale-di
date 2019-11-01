@@ -1,8 +1,8 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Test\Di\TestClasses\Service;
-
-use Tale\Test\Di\TestClasses\Service\ImporterInterface;
 
 class ImportManager
 {

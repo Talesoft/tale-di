@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Test\Di\TestClasses;
 
@@ -13,7 +15,8 @@ final class ParameterTest
      * SomeClass constructor.
      * @param string $stringValue
      */
-    public function __construct(string $stringValue) {
+    public function __construct(string $stringValue)
+    {
         $this->stringValue = $stringValue;
     }
 

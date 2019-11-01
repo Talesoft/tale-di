@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di\Dependency;
 
@@ -22,7 +24,6 @@ final class ParameterDependency implements DependencyInterface
     private $id;
     private $loaded = false;
     private $value;
-
     /**
      * @var bool
      */

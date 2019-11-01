@@ -19,11 +19,21 @@
             "email": "torben@talesoft.codes"
         }
     ],
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage-html": "phpunit --coverage-html=coverage",
+        "lint": "phpcs",
+        "lint:fix": "phpcbf"
+    },
     "require": {
         "php": ">=7.1.0",
         "psr/cache": "^1.0",
         "psr/container": "^1.0",
         "talesoft/tale-cache-core": "^0.1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.4",
+        "squizlabs/php_codesniffer": "^3.5"
     },
     "autoload": {
         "psr-4": {
@@ -38,8 +48,5 @@
     },
     "provide": {
         "psr/container-implementation": "~1.0"
-    },
-    "require-dev": {
-        "talesoft/tale-dev-tool": "dev-master"
     }
 }

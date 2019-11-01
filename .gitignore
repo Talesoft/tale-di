@@ -4,3 +4,4 @@
 /docs
 /coverage
 /coverage.xml
+/.phpunit.result.cache

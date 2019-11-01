@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale;
 
@@ -28,11 +30,11 @@ use Tale\Di\TypeInfoFactoryInterface;
  *
  * Pass an array of name-keyed dependency instances you can then retrieve the values from.
  *
- * @see DependencyInterface
- *
  * @param array $dependencies An array of dependency instances, keyed by the dependency name.
  *
  * @return ContainerInterface The created container.
+ * @see DependencyInterface
+ *
  */
 function di_container(array $dependencies): ContainerInterface
 {
@@ -44,11 +46,11 @@ function di_container(array $dependencies): ContainerInterface
  *
  * The container will just resolve the values contained in the array.
  *
- * @see ArrayContainer
- *
  * @param array $values The values to resolve with the container.
  *
  * @return ContainerInterface The container.
+ * @see ArrayContainer
+ *
  */
 function di_container_array(array $values): ContainerInterface
 {
@@ -58,9 +60,9 @@ function di_container_array(array $values): ContainerInterface
 /**
  * Creates a new Null-Container that can be used as a default implementation.
  *
+ * @return ContainerInterface A container that has no services.
  * @see NullContainer
  *
- * @return ContainerInterface A container that has no services.
  */
 function di_container_null(): ContainerInterface
 {
@@ -72,14 +74,14 @@ function di_container_null(): ContainerInterface
  *
  * It will create a fully wired PSR-11 dependency container.
  *
- * @see ContainerBuilder
- *
  * @param CacheItemPoolInterface|null $cachePool The PSR-6 cache item pool to cache auto-wiring info with.
  * @param string $cacheKey The cache key to cache auto-wiring information under.
  * @param TypeInfoFactoryInterface|null $typeInfoFactory The type info factory to generate type info with.
  * @param ParameterReaderInterface|null $parameterReader The parameter reader to read constructor parameters with.
  *
  * @return ContainerBuilderInterface The container builder.
+ * @see ContainerBuilder
+ *
  */
 function di_container_builder(
     CacheItemPoolInterface $cachePool = null,
@@ -93,11 +95,11 @@ function di_container_builder(
 /**
  * Creates a new File service locator.
  *
- * @see FileServiceLocator
- *
  * @param string $path The file path to locate a class name in.
  *
  * @return ServiceLocatorInterface The service locator.
+ * @see FileServiceLocator
+ *
  */
 function di_service_locator_file(string $path): ServiceLocatorInterface
 {
@@ -107,11 +109,11 @@ function di_service_locator_file(string $path): ServiceLocatorInterface
 /**
  * Creates a new DirectoryServiceLocator.
  *
- * @see DirectoryServiceLocator
- *
  * @param string $directory The directory to locate class names in.
  *
  * @return ServiceLocatorInterface The service locator.
+ * @see DirectoryServiceLocator
+ *
  */
 function di_service_locator_directory(string $directory): ServiceLocatorInterface
 {
@@ -121,12 +123,12 @@ function di_service_locator_directory(string $directory): ServiceLocatorInterfac
 /**
  * Creates a new GlobServiceLocator.
  *
- * @see GlobServiceLocator
- *
  * @param string $pattern The glob pattern to locate class names in.
  * @param string|null $excludePattern The exclude glob pattern of files to ignore.
  *
  * @return ServiceLocatorInterface The service locator.
+ * @see GlobServiceLocator
+ *
  */
 function di_service_locator_glob(string $pattern, ?string $excludePattern = null): ServiceLocatorInterface
 {
@@ -136,11 +138,11 @@ function di_service_locator_glob(string $pattern, ?string $excludePattern = null
 /**
  * Creates a new ValueDependency.
  *
- * @see ValueDependency
- *
  * @param $value The value the dependency contains.
  *
  * @return DependencyInterface The dependency.
+ * @see ValueDependency
+ *
  */
 function di_dependency_value($value): DependencyInterface
 {
@@ -150,11 +152,11 @@ function di_dependency_value($value): DependencyInterface
 /**
  * Creates a new ReferenceDependency.
  *
- * @see ReferenceDependency
- *
  * @param string $id The service ID to reference.
  *
  * @return DependencyInterface The dependency.
+ * @see ReferenceDependency
+ *
  */
 function di_dependency_reference(string $id): DependencyInterface
 {
@@ -164,10 +166,10 @@ function di_dependency_reference(string $id): DependencyInterface
 /**
  * Creates a new CallbackDependency.
  *
- * @see CallbackDependency
- *
  * @param callable $callback The callback that resolves to the dependency value.
  * @return DependencyInterface The dependency.
+ * @see CallbackDependency
+ *
  */
 function di_dependency_callback(callable $callback): DependencyInterface
 {
@@ -177,10 +179,10 @@ function di_dependency_callback(callable $callback): DependencyInterface
 /**
  * Creates a new PersistentCallbackDependency.
  *
- * @see PersistentCallbackDependency
- *
  * @param callable $callback The callback that resolves to the dependency value.
  * @return DependencyInterface The dependency.
+ * @see PersistentCallbackDependency
+ *
  */
 function di_dependency_persistent_callback(callable $callback): DependencyInterface
 {
@@ -190,9 +192,9 @@ function di_dependency_persistent_callback(callable $callback): DependencyInterf
 /**
  * Creates a new persistent type info factory.
  *
+ * @return TypeInfoFactoryInterface The type info factory.
  * @see PersistentTypeInfoFactory
  *
- * @return TypeInfoFactoryInterface The type info factory.
  */
 function di_type_info_factory_persistent(): TypeInfoFactoryInterface
 {
@@ -202,11 +204,11 @@ function di_type_info_factory_persistent(): TypeInfoFactoryInterface
 /**
  * Creates a new Doc Comment parameter reader.
  *
- * @see DocCommentParameterReader
- *
  * @param TypeInfoFactoryInterface|null $typeInfoFactory The type info factory to use.
  *
  * @return ParameterReaderInterface The parameter reader.
+ * @see DocCommentParameterReader
+ *
  */
 function di_parameter_reader_doc_comment(TypeInfoFactoryInterface $typeInfoFactory = null): ParameterReaderInterface
 {

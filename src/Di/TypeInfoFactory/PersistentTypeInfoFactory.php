@@ -1,10 +1,12 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di\TypeInfoFactory;
 
 use Tale\Di\TypeInfo;
-use Tale\Di\TypeInfoInterface;
 use Tale\Di\TypeInfoFactoryInterface;
+use Tale\Di\TypeInfoInterface;
 
 /**
  * The PersistentTypeInfoFactory will parse fully-qualified type names to type information.
@@ -33,7 +35,6 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
         'callable',
         'iterable'
     ];
-
     /**
      * @var TypeInfoInterface[] The cached type infos.
      */
@@ -44,14 +45,23 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
      */
     public function get(string $name): TypeInfoInterface
     {
-        // Map NULL to null, Xyz[] to array<Xyz> and \Some\Class to Some\Class
+        $patterns = [
+            // Turn array<string, int> to array<string,int>, string | null to string|null
+            '/\s*/',
+            // Turn Xyz[] to array<Xyz> and \Some\Class to Some\Class
+            '/^([^\[]+)\[\]$/',
+            // Turn array<\SomeClass> into array<SomeClass> and array<string, \SomeClass> into array<string, SomeClass>
+            '/([<,]\s*)\\\\/',
+        ];
+        $replacements = [
+            '',
+            'array<$1>',
+            '$1',
+        ];
+// Map NULL to null,
         $normalizedName = $name !== 'NULL'
-            ? preg_replace('/^([^\[]+)\[\]$/', 'array<$1>', ltrim(trim($name), '\\'))
+            ? preg_replace($patterns, $replacements, ltrim(trim($name), '\\'))
             : 'null';
-
-        // Turn array<\SomeClass> into array<SomeClass> and array<string, \SomeClass> into array<string, SomeClass>
-        $normalizedName = preg_replace('/([<,]\s*)\\\\/', '$1', $normalizedName);
-
         if (isset($this->typeInfos[$normalizedName])) {
             return $this->typeInfos[$normalizedName];
         }
@@ -67,12 +77,17 @@ final class PersistentTypeInfoFactory implements TypeInfoFactoryInterface
         if (\in_array($normalizedName, self::BUILT_IN_NAMES, true)) {
             $kind = TypeInfoInterface::KIND_BUILT_IN;
         }
+        // TODO: This is a very simple algorithm, it won't read nested generics correctly!
         if (preg_match('/^(\??\w+)<([^>]+)>$/', $normalizedName, $matches)) {
             $kind = TypeInfoInterface::KIND_GENERIC;
             $genericType = $this->get($matches[1]);
-            $genericParameterTypes = array_map(function (string $type) {
-                return $this->get($type);
-            }, explode(',', $matches[2]));
+            $genericParameterTypes = array_map(
+                function (string $type) {
+
+                    return $this->get($type);
+                },
+                explode(',', $matches[2])
+            );
         }
         return $this->typeInfos[$name] = new TypeInfo(
             $normalizedName,

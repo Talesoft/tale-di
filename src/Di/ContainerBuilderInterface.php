@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di;
 
@@ -27,7 +29,6 @@ interface ContainerBuilderInterface
      * @see ContainerBuilderInterface::build()
      */
     public const CACHE_KEY = 'tale.di.container_builder';
-
     /**
      * The phrase that denotes the application of parameters on all classes when using setParameter/s.
      *
@@ -42,11 +43,11 @@ interface ContainerBuilderInterface
      * Instances created by the container will find these parameters and apply them on constructor parameters
      * with the same name.
      *
-     * @see ContainerBuilderInterface::setParameters()
-     *
      * @param string $name The name of the parameter. Needs to be the same name as the constructor parameter.
      * @param $value The value that should be injected for that constructor parameter.
      * @param string $className The classes or interfaces to apply this parameter on. (Default: "*" (All classes))
+     * @see ContainerBuilderInterface::setParameters()
+     *
      */
     public function setParameter(string $name, $value, string $className = self::CLASS_NAME_ALL): void;
 
@@ -56,10 +57,10 @@ interface ContainerBuilderInterface
      * Instances created by the container will find these parameters and apply them on constructor parameters
      * with the same name.
      *
-     * @see ContainerBuilderInterface::setParameter()
-     *
      * @param iterable $parameters An array/iterable of the parameters to add. Keys are the name, values are values.
      * @param string $className The classes or interfaces to apply these parameters on. (Default: "*" (All classes))
+     * @see ContainerBuilderInterface::setParameter()
+     *
      */
     public function setParameters(iterable $parameters, string $className = self::CLASS_NAME_ALL): void;
 
@@ -78,14 +79,14 @@ interface ContainerBuilderInterface
      *
      * Dependencies are lazy factories, basically.
      *
-     * @see CallbackDependency
-     * @see ParameterDependency
+     * @param string $name The name to register the dependency under (can be any name).
+     * @param DependencyInterface $dependency The dependency to register.
      * @see PersistentCallbackDependency
      * @see ReferenceDependency
      * @see ValueDependency
      *
-     * @param string $name The name to register the dependency under (can be any name).
-     * @param DependencyInterface $dependency The dependency to register.
+     * @see CallbackDependency
+     * @see ParameterDependency
      */
     public function addDependency(string $name, DependencyInterface $dependency): void;
 
@@ -103,12 +104,12 @@ interface ContainerBuilderInterface
      *
      * The class locators will locate classes in files and directories.
      *
-     * @see ServiceLocatorInterface
+     * @param ServiceLocatorInterface $locator A service locator instance.
      * @see DirectoryServiceLocator
      * @see FileServiceLocator
      * @see GlobServiceLocator
      *
-     * @param ServiceLocatorInterface $locator A service locator instance.
+     * @see ServiceLocatorInterface
      */
     public function addLocator(ServiceLocatorInterface $locator): void;
 
@@ -117,8 +118,8 @@ interface ContainerBuilderInterface
      *
      * It will cache the results using the given PSR-6 cache item pool.
      *
-     * @see ContainerInterface
      * @return ContainerInterface
+     * @see ContainerInterface
      */
     public function build(): ContainerInterface;
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di;
 
@@ -12,8 +14,8 @@ use RuntimeException;
 use Serializable;
 use Tale\Cache\Pool\RuntimePool;
 use Tale\Di\Dependency\CallbackDependency;
-use Tale\Di\Dependency\PersistentCallbackDependency;
 use Tale\Di\Dependency\ParameterDependency;
+use Tale\Di\Dependency\PersistentCallbackDependency;
 use Tale\Di\Dependency\ValueDependency;
 use Tale\Di\ParameterReader\DocCommentParameterReader;
 use Tale\Di\TypeInfoFactory\PersistentTypeInfoFactory;
@@ -35,17 +37,14 @@ final class ContainerBuilder implements ContainerBuilderInterface
      * @var CacheItemPoolInterface The PSR-6 cache item pool the container uses to cache the auto-wiring data.
      */
     private $cachePool;
-
     /**
      * @var string The cache key auto-wiring data is cached under.
      */
     private $cacheKey;
-
     /**
      * @var ParameterReaderInterface A parameter reader to read parameter information from constructors.
      */
     private $parameterReader;
-
     /**
      * @see ContainerBuilder::setParameter()
      * @see ContainerBuilder::setParameters()
@@ -53,21 +52,18 @@ final class ContainerBuilder implements ContainerBuilderInterface
      * @var array An array of parameters registered with this container builder.
      */
     private $parameters = [];
-
     /**
      * @see ContainerBuilder::add()
      *
      * @var string[] An array of pre-registered class names to add to the container.
      */
     private $registeredClassNames = [];
-
     /**
      * @see ContainerBuilder::addDependency()
      *
-     * @var DependencyInterface[] An array of dependencies keyed by name that will be added to the container when it's built.
+     * @var DependencyInterface[] An array of dependencies keyed by name that will be added to the container.
      */
     private $registeredDependencies = [];
-
     /**
      * @see ContainerBuilder::addLocator()
      *
@@ -170,8 +166,7 @@ final class ContainerBuilder implements ContainerBuilderInterface
     private function buildDependencies(): array
     {
         $item = $this->cachePool->getItem($this->cacheKey);
-
-        // Generate and cache auto-wiring information if required
+// Generate and cache auto-wiring information if required
         if (!$item->isHit()) {
             $item->set(iterator_to_array($this->buildServices()));
             $this->cachePool->save($item);
@@ -179,11 +174,10 @@ final class ContainerBuilder implements ContainerBuilderInterface
 
         /** @var Service[] $services */
         $services = $item->get();
-
         $tags = [];
         $dependencies = [];
         $registeredDependencies = $this->registeredDependencies;
-        // Walk through all services and create dependencies out of them
+// Walk through all services and create dependencies out of them
         foreach ($services as $className => $service) {
             $params = [];
             if (isset($registeredDependencies[$className])) {
@@ -191,29 +185,55 @@ final class ContainerBuilder implements ContainerBuilderInterface
                 $dependencies[$className] = $registeredDependencies[$className];
                 unset($registeredDependencies[$className]);
             } else {
+                $serviceParams = $service->getParameters();
+                // $names contains all classes our service will be available as, possibly
+                $names = array_merge($service->getTags(), [$className, '*']);
+                // Check for fixed, registered parameters in $this->parameters.
+                // They will override the parameters we read in the services definition.
+                foreach ($this->parameters as $targetClassName => $fixedParams) {
+                    if (!in_array($targetClassName, $names, true)) {
+                        continue;
+                    }
+
+                    foreach ($fixedParams as $name => $value) {
+                        if (!isset($serviceParams[$name])) {
+                            continue;
+                        }
+                        // Override parameter with defined value
+                        $serviceParams[$name] = new Parameter(
+                            $serviceParams[$name]->getName(),
+                            $serviceParams[$name]->getTypeInfo(),
+                            true,
+                            $value
+                        );
+                    }
+                }
                 // Build parameters and map them to dependencies to let them use the container instance
                 // when the class instance is created
-                foreach ($service->getParameters() as $name => $param) {
+                foreach ($serviceParams as $name => $param) {
                     $valueFactory = null;
                     $typeInfo = $param->getTypeInfo();
-
                     if ($typeInfo->isBuiltIn() && !$param->isOptional()) {
-                        throw new RuntimeException(sprintf(
-                            'Failed to wire constructor parameter $%s of class %s: No value found. '.
-                            'You should probably call ContainerBuilder::setParameter(\'%s\', $value, \'%s\') before '.
-                            'calling build to specify the parameter.',
-                            $param->getName(),
-                            $className,
-                            $param->getName(),
-                            $className
-                        ));
+                        throw new RuntimeException(
+                            sprintf(
+                                'Failed to wire constructor parameter $%s of class %s: No value found. ' .
+                                'You should probably call ContainerBuilder::setParameter(\'%s\', $value, \'%s\') ' .
+                                'before calling build to specify the parameter.',
+                                $param->getName(),
+                                $className,
+                                $param->getName(),
+                                $className
+                            )
+                        );
                     }
 
                     if ($typeInfo->isClassName()
                         && $param->isOptional()
                         && !$typeInfo->isNullable()
-                        && $param->getDefaultValue() === null) {
+                        && $param->getDefaultValue() === null
+                    ) {
                         // Let PHP errors handle it if they are not there/defined
+                        $params[] = new ValueDependency(null);
                         continue;
                     }
 
@@ -224,7 +244,9 @@ final class ContainerBuilder implements ContainerBuilderInterface
                                 "Parameter {$param->getName()} of {$className} is not a serializable dependency"
                             );
                         }
-                        $params[] = $value instanceof DependencyInterface ? $value : new ValueDependency($value);
+                        $params[] = $value instanceof DependencyInterface
+                            ? $value
+                            : new ValueDependency($value);
                         continue;
                     }
 
@@ -240,9 +262,14 @@ final class ContainerBuilder implements ContainerBuilderInterface
                 //       either PersistentCallback or Callback dependencies
                 $dependencies[$className] = new PersistentCallbackDependency(
                     static function (ContainerInterface $container) use ($className, $params) {
-                        return new $className(...array_map(static function (DependencyInterface $dep) use ($container) {
-                            return $dep->get($container);
-                        }, $params));
+                        return new $className(
+                            ...array_map(
+                                static function (DependencyInterface $dep) use ($container) {
+                                       return $dep->get($container);
+                                },
+                                $params
+                            )
+                        );
                     }
                 );
             }
@@ -267,7 +294,6 @@ final class ContainerBuilder implements ContainerBuilderInterface
                     }
                 }
             );
-
             $dependencies["array<{$tag}>"] = new PersistentCallbackDependency(
                 static function (ContainerInterface $container) use ($tag) {
                     return iterator_to_array($container->get("iterable<{$tag}>"));
@@ -281,25 +307,33 @@ final class ContainerBuilder implements ContainerBuilderInterface
     /**
      * Generates auto-wiring data for services and will return Service instances with their information.
      *
-     * @see ContainerBuilder::locateClasses()
-     * @see ContainerBuilder::buildService()
-     * @see Service
-     *
      * @return Generator A generator of Service instances keyed by their class name.
      * @throws ReflectionException
+     * @see Service
+     *
+     * @see ContainerBuilder::locateClasses()
+     * @see ContainerBuilder::buildService()
      */
     private function buildServices(): Generator
     {
         // Loads all existing class names we registered, either from class names, instances or
         // without service locators
-        $classNames = array_values(array_unique(array_reverse(array_merge(
-            $this->registeredClassNames,
-            iterator_to_array($this->locateClasses()),
-            array_filter(array_keys($this->registeredDependencies), static function (string $className) {
-                return class_exists($className);
-            })
-        ))));
-
+        $classNames = array_values(
+            array_unique(
+                array_reverse(
+                    array_merge(
+                        $this->registeredClassNames,
+                        iterator_to_array($this->locateClasses()),
+                        array_filter(
+                            array_keys($this->registeredDependencies),
+                            static function (string $className) {
+                                return class_exists($className);
+                            }
+                        )
+                    )
+                )
+            )
+        );
         $finishedDefinitions = [];
         // Walk through all services to create or Service instance that contains all auto-wiring information
         foreach ($classNames as $className) {
@@ -316,10 +350,8 @@ final class ContainerBuilder implements ContainerBuilderInterface
 
             // Register the class name as defined
             $finishedDefinitions[] = $className;
-
             // Yield our newly created service definition
             yield $className => $service;
-
             // Walk through all constructor parameters and check for classes/services we may not know yet
             // All parameter types you didn't add will be added now
             // If we requested services that come later in our class name array, the definition will be
@@ -348,14 +380,14 @@ final class ContainerBuilder implements ContainerBuilderInterface
      *
      * Parameterless constructors or constructor-less classes are handled as expected.
      *
-     * @see ContainerBuilder::buildServices()
-     * @see ParameterReaderInterface
-     * @see Parameter
-     * @see Service
-     *
      * @param string $className The class name to create a service information object from.
      * @return Service The service information object created.
      * @throws ReflectionException
+     * @see Service
+     *
+     * @see ContainerBuilder::buildServices()
+     * @see ParameterReaderInterface
+     * @see Parameter
      */
     private function buildService(string $className): ?Service
     {
@@ -377,23 +409,6 @@ final class ContainerBuilder implements ContainerBuilderInterface
 
         // Get the interfaces of the class. These are our "tags"
         $tags = $reflClass->getInterfaceNames();
-        // $names contains all classes our service will be available as, possibly
-        $names = array_merge($tags, [$className, '*']);
-        // Check for fixed, registered parameters in $this->parameters.
-        // They will override the parameters we read above.
-        foreach ($this->parameters as $targetClassName => $fixedParams) {
-            if (!in_array($targetClassName, $names, true)) {
-                continue;
-            }
-
-            foreach ($fixedParams as $name => $value) {
-                if (!isset($params[$name])) {
-                    continue;
-                }
-                // Override parameter with defined value
-                $params[$name] = new Parameter($params[$name]->getName(), $params[$name]->getTypeInfo(), true, $value);
-            }
-        }
         // Return our final, finished service instance with all data
         return new Service($className, $tags, $params);
     }
@@ -401,9 +416,9 @@ final class ContainerBuilder implements ContainerBuilderInterface
     /**
      * Collects all locale() calls on the service locators we registered.
      *
+     * @return Traversable An iterable of all located class names found.
      * @see ContainerBuilder::buildServices()
      *
-     * @return Traversable An iterable of all located class names found.
      */
     private function locateClasses(): Traversable
     {

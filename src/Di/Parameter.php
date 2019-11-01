@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di;
 
@@ -15,19 +17,16 @@ final class Parameter implements \Serializable
      * @var string The name of the parameter without the dollar sign ($).
      */
     private $name;
-
     /**
      * @see TypeInfoFactoryInterface
      *
      * @var TypeInfoInterface The type information of the parameter.
      */
     private $typeInfo;
-
     /**
      * @var bool Whether this parameter is optional or not.
      */
     private $optional;
-
     /**
      * @var mixed The default value of the parameter.
      */
@@ -106,12 +105,14 @@ final class Parameter implements \Serializable
      */
     public function serialize(): string
     {
-        return serialize([
-            $this->name,
-            $this->typeInfo,
-            $this->optional,
-            $this->defaultValue
-        ]);
+        return serialize(
+            [
+                $this->name,
+                $this->typeInfo,
+                $this->optional,
+                $this->defaultValue
+            ]
+        );
     }
 
     /**
@@ -126,8 +127,13 @@ final class Parameter implements \Serializable
             $this->typeInfo,
             $this->optional,
             $this->defaultValue
-        ] = unserialize($serialized, ['allowed_classes' => [
-            \Serializable::class
-        ]]);
+        ] = unserialize(
+            $serialized,
+            [
+                'allowed_classes' => [
+                    \Serializable::class
+                ]
+            ]
+        );
     }
 }

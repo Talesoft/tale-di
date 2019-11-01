@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tale\Test\Di\TestClasses;
 
-final class MultiParameterTest
+final class PartiallyDocumentedMultiParameterTest
 {
     /**
      * @var string
@@ -24,13 +24,12 @@ final class MultiParameterTest
     private $arrayValue;
 
     /**
-     * SomeClass constructor.
-     * @param string $stringValue
+     * Don't add more comments here!
+     *
      * @param int $intValue
      * @param float $floatValue
-     * @param array $arrayValue
      */
-    public function __construct(string $stringValue, int $intValue, float $floatValue, array $arrayValue)
+    public function __construct(string $stringValue, int $intValue, $floatValue, $arrayValue)
     {
         $this->stringValue = $stringValue;
         $this->intValue = $intValue;

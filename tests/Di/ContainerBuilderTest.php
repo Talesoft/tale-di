@@ -1,22 +1,19 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Test\Di;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Tale\Cache\Pool\NullPool;
-use Tale\Di\Container;
-use Tale\Di\ServiceLocator\DirectoryServiceLocator;
-use Tale\Di\ServiceLocator\GlobServiceLocator;
 use Tale\Di\ContainerBuilder;
-use Tale\Test\Di\TestClasses\App;
+use Tale\Di\ServiceLocator\DirectoryServiceLocator;
 use Tale\Test\Di\TestClasses\MultiParameterTest;
 use Tale\Test\Di\TestClasses\ParameterTest;
-use Tale\Test\Di\TestClasses\Service\ImportManager;
-use Tale\Test\Di\TestClasses\Service\Importer\ProductImporter;
 use Tale\Test\Di\TestClasses\Service\Importer\UserImporter;
 use Tale\Test\Di\TestClasses\Service\ImporterInterface;
+use Tale\Test\Di\TestClasses\Service\ImportManager;
 
 /**
  * @coversDefaultClass \Tale\Di\ContainerBuilder
@@ -75,12 +72,14 @@ class ContainerBuilderTest extends TestCase
     public function testSetParameters(): void
     {
         $builder = new ContainerBuilder();
-        $builder->setParameters([
-            'stringValue' => 'some value',
-            'intValue' => 14,
-            'floatValue' => 12.2,
-            'arrayValue' => [1, 2, 3],
-        ]);
+        $builder->setParameters(
+            [
+                'stringValue' => 'some value',
+                'intValue' => 14,
+                'floatValue' => 12.2,
+                'arrayValue' => [1, 2, 3],
+            ]
+        );
         $builder->add(MultiParameterTest::class);
         $container = $builder->build();
         $instance = $container->get(MultiParameterTest::class);
@@ -93,7 +92,11 @@ class ContainerBuilderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::build
-     * @group failing
+     *
+     * @covers ::buildService
+     * @covers ::buildServices
+     * @covers ::locateClasses
+     * @covers ::getClassNameTypes
      */
     public function testBuild(): void
     {
@@ -104,7 +107,7 @@ class ContainerBuilderTest extends TestCase
         $userImporter = $container->get(UserImporter::class);
         self::assertInstanceOf(UserImporter::class, $userImporter);
         $anyImporter = $container->get(ImporterInterface::class);
-        // This can be any importer, it's usually the last one added
+// This can be any importer, it's usually the last one added
         self::assertInstanceOf(ImporterInterface::class, $userImporter);
         $importers = $container->get('array<Tale\\Test\\Di\\TestClasses\\Service\\ImporterInterface>');
         self::assertCount(4, $importers);
@@ -128,11 +131,10 @@ class ContainerBuilderTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::build
-     *
-     * @expectedException RuntimeException
      */
     public function testBuildWhenParameterCouldNotBeWired(): void
     {
+        $this->expectException(RuntimeException::class);
         $builder = new ContainerBuilder();
         $builder->add(ParameterTest::class);
         $builder->build();

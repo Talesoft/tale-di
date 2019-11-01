@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di;
 
@@ -12,17 +14,14 @@ interface TypeInfoInterface
      * 'any' counts as an inbuilt type.
      */
     public const NAME_ANY = 'any';
-
     /**
      * Represents Builtin types of PHP (array, int, float, string, object, null, callable, iterable etc.)
      */
     public const KIND_BUILT_IN = 'built_in';
-
     /**
      * Represents generic types with the usual format known: "BaseClass<string, SomeTypeParam>" etc.)
      */
     public const KIND_GENERIC = 'generic';
-
     /**
      * Represents types that are names of a class (fully-qualified class names).
      *

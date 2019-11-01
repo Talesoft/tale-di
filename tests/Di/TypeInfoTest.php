@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Test\Di;
 
@@ -81,8 +83,10 @@ class TypeInfoTest extends TestCase
         $genericType = new TypeInfo('', TypeInfo::KIND_CLASS_NAME);
         self::assertNull((new TypeInfo('', TypeInfo::KIND_BUILT_IN))->getGenericType());
         self::assertNull((new TypeInfo('', TypeInfo::KIND_BUILT_IN, false, null))->getGenericType());
-        self::assertEquals($genericType, (new TypeInfo('', TypeInfo::KIND_BUILT_IN, false, $genericType))
-            ->getGenericType()
+        self::assertEquals(
+            $genericType,
+            (new TypeInfo('', TypeInfo::KIND_BUILT_IN, false, $genericType))
+                ->getGenericType()
         );
     }
 
@@ -112,13 +116,11 @@ class TypeInfoTest extends TestCase
             new TypeInfo('', TypeInfo::KIND_BUILT_IN),
             $types
         );
-        self::assertSame(
-            'C:16:"Tale\Di\TypeInfo":337:{a:4:{i:0;s:21:"array<TestClass, int>";i:1;s:7:"generic";i:2;C:16:"Tale\Di\Ty'.
-            'peInfo":52:{a:4:{i:0;s:0:"";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}i:3;a:2:{i:0;C:16:"Tale\Di\TypeInfo":64:'.
-            '{a:4:{i:0;s:9:"TestClass";i:1;s:10:"class_name";i:2;N;i:3;a:0:{}}}i:1;C:16:"Tale\Di\TypeInfo":55:{a:4:{i:'.
-            '0;s:3:"int";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}}}}',
-            serialize($info)
-        );
+        $serialized = 'C:16:"Tale\Di\TypeInfo":337:{a:4:{i:0;s:21:"array<TestClass, int>";i:1;s:7:"generic";i:2;C:16:' .
+            '"Tale\Di\TypeInfo":52:{a:4:{i:0;s:0:"";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}i:3;a:2:{i:0;C:16:"Tale\Di\T' .
+            'ypeInfo":64:{a:4:{i:0;s:9:"TestClass";i:1;s:10:"class_name";i:2;N;i:3;a:0:{}}}i:1;C:16:"Tale\Di\TypeInfo' .
+            '":55:{a:4:{i:0;s:3:"int";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}}}}';
+        self::assertSame($serialized, serialize($info));
     }
 
     /**
@@ -135,12 +137,10 @@ class TypeInfoTest extends TestCase
             new TypeInfo('', TypeInfo::KIND_BUILT_IN),
             $types
         );
-        self::assertEquals(
-            $info,
-            unserialize('C:16:"Tale\Di\TypeInfo":337:{a:4:{i:0;s:21:"array<TestClass, int>";i:1;s:7:"generic";i:2;C:16:"Tale\Di\Ty'.
-            'peInfo":52:{a:4:{i:0;s:0:"";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}i:3;a:2:{i:0;C:16:"Tale\Di\TypeInfo":64:'.
-            '{a:4:{i:0;s:9:"TestClass";i:1;s:10:"class_name";i:2;N;i:3;a:0:{}}}i:1;C:16:"Tale\Di\TypeInfo":55:{a:4:{i:'.
-            '0;s:3:"int";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}}}}')
-        );
+        $serialized = 'C:16:"Tale\Di\TypeInfo":337:{a:4:{i:0;s:21:"array<TestClass, int>";i:1;s:7:"generic";i:2;C:16:' .
+            '"Tale\Di\TypeInfo":52:{a:4:{i:0;s:0:"";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}i:3;a:2:{i:0;C:16:"Tale\Di\T' .
+            'ypeInfo":64:{a:4:{i:0;s:9:"TestClass";i:1;s:10:"class_name";i:2;N;i:3;a:0:{}}}i:1;C:16:"Tale\Di\TypeInfo' .
+            '":55:{a:4:{i:0;s:3:"int";i:1;s:8:"built_in";i:2;N;i:3;a:0:{}}}}}}';
+        self::assertEquals($info, unserialize($serialized));
     }
 }

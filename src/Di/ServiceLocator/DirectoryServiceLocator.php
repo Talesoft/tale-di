@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Di\ServiceLocator;
 
@@ -41,16 +43,16 @@ final class DirectoryServiceLocator implements ServiceLocatorInterface
             if (is_dir($fullPath)) {
                 // We iterate instead of using yield from because yield from resets keys
                 // and will break iterator_to_array when not using use_keys on it
-                $dirClassNames = (new self($fullPath))->locate();
-                foreach ($dirClassNames as $dirClassName) {
+                $directoryLocator = new self($fullPath);
+                foreach ($directoryLocator->locate() as $dirClassName) {
                     yield $dirClassName;
                 }
                 continue;
             }
             // We iterate instead of using yield from because yield from resets keys
             // and will break iterator_to_array when not using use_keys on it
-            $fileClassNames = (new FileServiceLocator($fullPath))->locate();
-            foreach ($fileClassNames as $fileClassName) {
+            $fileLocator = new FileServiceLocator($fullPath);
+            foreach ($fileLocator->locate() as $fileClassName) {
                 yield $fileClassName;
             }
         }

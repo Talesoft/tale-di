@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tale\Test\Di\TestClasses;
 
@@ -6,10 +8,8 @@ final class App
 {
     /** @var \DateTimeInterface */
     private $someInterface;
-
     /** @var string */
     private $someString;
-
     /** @var iterable */
     private $someInterfaces;
 
